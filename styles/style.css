@@ -4,11 +4,11 @@ body {
     justify-content: center;
     align-items: center;
     height: 100vh;
-    background: #70c5ce;
+    background: #07548e;
 }
 
 canvas {
-    border: 2px solid #000;
+    border: 2px solid #07548e;
     background: url("../images/background.png") no-repeat center;
     background-size: cover;
 }
