@@ -2,9 +2,15 @@ const canvas = document.getElementById("gameCanvas");
 const ctx = canvas.getContext("2d");
 ctx.imageSmoothingEnabled = false;
 
+let fishY;
+
 function resizeCanvas() {
-  const maxWidth = window.innerWidth;
-  const maxHeight = window.innerHeight;
+  const maxWidth = window.visualViewport
+    ? window.visualViewport.width
+    : window.innerWidth;
+  const maxHeight = window.visualViewport
+    ? window.visualViewport.height
+    : window.innerHeight;
   const aspectRatio = 768 / 1024; // nieuwe verhouding (breedte / hoogte)
 
   let newWidth = maxWidth;
@@ -17,24 +23,28 @@ function resizeCanvas() {
 
   canvas.width = newWidth;
   canvas.height = newHeight;
+  fishY = canvas.height / 2 - 24;
 }
 
 window.addEventListener("resize", resizeCanvas);
+window.addEventListener("orientationchange", () => {
+  setTimeout(resizeCanvas, 200);
+});
 resizeCanvas();
 
 // Afbeeldingen
 const fishImg = new Image();
-fishImg.src = "../images/el-vis.png";
+fishImg.src = "images/el-vis.png";
 
 const pipeImg = new Image();
-pipeImg.src = "../images/pipe.png";
+pipeImg.src = "images/pipe.png";
 
 const bgImg = new Image();
-bgImg.src = "../images/background.png";
+bgImg.src = "images/background.png";
 
 // Fish settings
 let fishX = 100;
-let fishY = canvas.height / 2 - 24; // 24 is de helft van de hoogte van de vis
+// let fishY = canvas.height / 2 - 24; // 24 is de helft van de hoogte van de vis
 let gravity = 0.4;
 let lift = -4;
 let velocity = 0;
@@ -76,7 +86,7 @@ function stopGame() {
   }, 3000);
 }
 
-// Controls
+// Controls - Keyboard fallback for desktop only
 document.addEventListener("keydown", (e) => {
   if (e.code === "Space" || e.key === " " || e.key === "Spacebar") {
     e.preventDefault();
@@ -99,13 +109,35 @@ document.addEventListener("keyup", (e) => {
   }
 });
 
-document.addEventListener("touchstart", () => {
-  startGame();
-  isFlapping = true;
-});
+// Controls - Touch for mobile
+document.addEventListener(
+  "touchstart",
+  (e) => {
+    e.preventDefault();
+    if (gameOver && !restartCooldown) {
+      resetGame();
+      gameOver = false;
+      gameStarted = false;
+      idleLoop();
+      return;
+    }
+    startGame();
+    isFlapping = true;
+  },
+  { passive: false }
+);
 
-document.addEventListener("touchend", () => {
-  isFlapping = false;
+document.addEventListener(
+  "touchend",
+  (e) => {
+    e.preventDefault();
+    isFlapping = false;
+  },
+  { passive: false }
+);
+
+document.addEventListener("touchmove", (e) => e.preventDefault(), {
+  passive: false,
 });
 
 // Removed R key restart listener, replaced with Space logic above.
@@ -203,6 +235,8 @@ function resetGame() {
   if (restartBtn) {
     restartBtn.style.display = "none";
   }
+  drawBackground();
+  drawFish();
 }
 function drawScore() {
   ctx.fillStyle = "white";
@@ -257,6 +291,7 @@ function gameLoop() {
 
 // Teken de vis direct na het laden van de afbeelding
 fishImg.onload = () => {
+  resizeCanvas();
   drawBackground();
   idleLoop();
 };
