@@ -121,7 +121,7 @@ function drawHighscores() {
   ctx.textAlign = "center";
   ctx.fillText("Top Scores", canvas.width / 2, canvas.height / 2 + 100);
   ctx.font = `${canvas.width / 30}px Arial`;
-  highscores.slice(0, 5).forEach((row, index) => {
+  highscores.slice(0, 10).forEach((row, index) => {
     ctx.fillText(
       `${index + 1}. ${row.player}: ${row.score}`,
       canvas.width / 2,
@@ -148,7 +148,7 @@ function drawGameOver() {
     restartBtn.style.display = "block";
   }
 
-  const baseY = canvas.height / 2 + 140 + 5 * 30 + 40; // below the 5 scores
+  const baseY = canvas.height / 2 + 140 + 10 * 30 + 40; // below the 10 scores
 
   const saveScoreContainer = document.getElementById("saveScoreContainer");
   if (saveScoreContainer) {
@@ -322,7 +322,7 @@ function checkCollision() {
   }
 }
 
-// Game state functions
+// === Game state & loops ===
 function startGame() {
   if (gameStarted) return;
   gameStarted = true;
@@ -388,7 +388,6 @@ function resetGame() {
   drawFish();
 }
 
-// Main game loop
 function gameLoop() {
   drawBackground();
 
@@ -420,7 +419,6 @@ function gameLoop() {
   }
 }
 
-// Idle animation loop before game start
 function idleLoop() {
   drawBackground();
   drawMeander();
