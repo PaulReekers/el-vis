@@ -3,6 +3,7 @@ const ctx = canvas.getContext("2d");
 ctx.imageSmoothingEnabled = false;
 
 // Asset dimensions and scaling
+const PIPE_DISTANCE = 400; // horizontale afstand tussen opeenvolgende pipes
 const fishOriginalWidth = 158;
 const fishOriginalHeight = 56;
 const FISH_SCALE = 0.6;
@@ -10,8 +11,11 @@ const FISH_SCALE = 0.6;
 const meanderOriginalWidth = 193;
 const meanderOriginalHeight = 108;
 
-const pipeWidth = 100;
-const pipeGap = 250;
+const pipeWidth = 120;
+const pipeGap = 200;
+const PIPE_HITBOX_PADDING = 15;
+
+let DEBUG = false; // zet via console op true om debug hitboxes te tonen
 
 // Physics constants
 const GRAVITY = 0.5;
@@ -103,7 +107,7 @@ function drawFish(customY = fishY) {
   ctx.save();
   const fishWidth = fishOriginalWidth * FISH_SCALE;
   const fishHeight = fishOriginalHeight * FISH_SCALE;
-  ctx.translate(fishX + fishWidth / 2, customY + fishHeight / 2);
+  ctx.translate(fishX + fishWidth * 0.4, customY + fishHeight * 0.4);
   let angle = 0;
   if (isFlapping) {
     angle = (-20 * Math.PI) / 180;
@@ -162,13 +166,6 @@ function drawGameOver() {
   ctx.font = `${canvas.width / 8}px "Papyrus", "Times New Roman", serif`;
   ctx.textAlign = "center";
   ctx.fillText("Score: " + score, canvas.width / 2, canvas.height / 2 - 80);
-  ctx.font = `${canvas.width / 12}px "Papyrus", "Times New Roman", serif`;
-  ctx.fillText("Best: " + highScore, canvas.width / 2, canvas.height / 2);
-  if (highScoreDate) {
-    ctx.font = `${canvas.width / 20}px Arial`;
-  }
-
-  drawHighscores();
 
   const restartBtn = document.getElementById("restartBtn");
   if (restartBtn) {
@@ -200,10 +197,6 @@ function drawGameOver() {
   const playAgainBtn = document.getElementById("playAgainBtn");
   if (playAgainBtn) {
     playAgainBtn.style.display = "block";
-    playAgainBtn.style.position = "absolute";
-    playAgainBtn.style.top = `${baseY + 60}px`;
-    playAgainBtn.style.left = "50%";
-    playAgainBtn.style.transform = "translateX(-50%)";
   }
 }
 
@@ -219,8 +212,11 @@ function updatePipes() {
   if (pipesSpawned === 0 && Date.now() - gameStartTime < 2000) {
     return;
   }
-
-  if (pipes.length === 0 || pipes[pipes.length - 1].x < canvas.width - 300) {
+  q;
+  if (
+    pipes.length === 0 ||
+    pipes[pipes.length - 1].x < canvas.width - PIPE_DISTANCE
+  ) {
     let topPipeHeight = Math.random() * (canvas.height - pipeGap - 50) + 20;
     pipes.push({
       x: canvas.width,
@@ -253,6 +249,32 @@ function updatePipes() {
   }
 }
 
+// Debug functie om hitboxes te tekenen
+function drawDebugHitboxes() {
+  const fishWidth = fishOriginalWidth * FISH_SCALE;
+  const fishHeight = fishOriginalHeight * FISH_SCALE;
+  const fishCenterX = fishX + fishWidth / 2;
+  const fishCenterY = fishY + fishHeight / 2;
+  const fishRadius = Math.min(fishWidth, fishHeight) / 2.5;
+
+  ctx.beginPath();
+  ctx.arc(fishCenterX, fishCenterY, fishRadius, 0, 2 * Math.PI);
+  ctx.strokeStyle = "red";
+  ctx.lineWidth = 2;
+  ctx.stroke();
+
+  pipes.forEach((pipe) => {
+    ctx.strokeStyle = "lime";
+    ctx.lineWidth = 2;
+    ctx.strokeRect(
+      pipe.x + PIPE_HITBOX_PADDING,
+      pipe.y,
+      pipeWidth - PIPE_HITBOX_PADDING * 2,
+      canvas.height
+    );
+  });
+}
+
 // Collision detection
 function checkCollision() {
   const fishWidth = fishOriginalWidth * FISH_SCALE;
@@ -268,12 +290,25 @@ function checkCollision() {
 
   for (let i = 0; i < pipes.length; i++) {
     let pipe = pipes[i];
-    if (
-      fishX + hitboxMargin + 10 < pipe.x + pipeWidth &&
-      fishX + fishWidth - hitboxMargin - 10 > pipe.x &&
-      fishY + hitboxMargin < pipe.y + canvas.height &&
-      fishY + fishHeight - hitboxMargin > pipe.y
-    ) {
+    const fishWidth = fishOriginalWidth * FISH_SCALE;
+    const fishHeight = fishOriginalHeight * FISH_SCALE;
+    const fishCenterX = fishX + fishWidth / 2;
+    const fishCenterY = fishY + fishHeight / 2;
+    const fishRadius = Math.min(fishWidth, fishHeight) / 2.5;
+
+    const closestX = Math.max(
+      pipe.x + PIPE_HITBOX_PADDING,
+      Math.min(fishCenterX, pipe.x + pipeWidth - PIPE_HITBOX_PADDING)
+    );
+    const closestY = Math.max(
+      pipe.y,
+      Math.min(fishCenterY, pipe.y + canvas.height)
+    );
+
+    const dx = fishCenterX - closestX;
+    const dy = fishCenterY - closestY;
+
+    if (dx * dx + dy * dy < fishRadius * fishRadius) {
       stopGame();
     }
   }
@@ -367,7 +402,9 @@ function gameLoop() {
   drawMeander();
 
   drawScore();
-
+  if (DEBUG) {
+    drawDebugHitboxes();
+  }
   checkCollision();
 
   if (gameStarted) {

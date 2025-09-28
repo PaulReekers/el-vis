@@ -13,15 +13,23 @@ canvas {
     background: url("../images/background.png") no-repeat center;
     background-size: cover;
 }
+
+/* Utility classes voor toggling */
+.hidden {
+    display: none !important;
+}
+
+.visible {
+    display: flex !important;
+}
+
 #saveScoreContainer {
     position: absolute;
     top: 60%;
     left: 50%;
     transform: translate(-50%, -50%);
-    display: none;
     text-align: center;
 }
-
 
 #saveScoreBtn {
     padding: 12px 24px;
@@ -34,6 +42,7 @@ canvas {
     cursor: pointer;
     margin-top: -20px;
     margin-bottom: 10px;
+    border: solid 2px white;
 }
 
 #confirmSaveBtn {
@@ -45,6 +54,7 @@ canvas {
     border: none;
     border-radius: 6px;
     cursor: pointer;
+    border: solid 2px white;
 }
 
 #saveScoreBtn:hover,
@@ -71,7 +81,8 @@ canvas {
 
 #playAgainBtn {
     position: absolute;
-    top: 70%;
+    display: block;
+    top: 55%;
     left: 50%;
     transform: translate(-50%, -50%);
     padding: 12px 24px;
@@ -82,9 +93,8 @@ canvas {
     border: none;
     border-radius: 8px;
     cursor: pointer;
-    display: block;
-    /* altijd tonen */
     z-index: 12;
+    border: solid 2px white;
 }
 
 #playAgainBtn:hover {
