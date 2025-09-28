@@ -73,6 +73,8 @@ let pipeWidth = 100;
 let pipeGap = 200;
 let pipeSpeed = 2;
 
+let pipesSpawned = 0;
+
 let score = 0;
 let gameOver = false;
 
@@ -220,6 +222,11 @@ function updatePipes() {
       y: topPipeHeight + pipeGap,
       scored: false,
     }); // onderste pijp
+
+    pipesSpawned++;
+    if (pipesSpawned % 5 === 0) {
+      pipeSpeed += 0.5; // of een waarde die goed voelt
+    }
   }
 
   pipes.forEach((pipe) => (pipe.x -= pipeSpeed));
