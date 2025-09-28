@@ -13,3 +13,42 @@ canvas {
     background: url("../images/background.png") no-repeat center;
     background-size: cover;
 }
+#saveScoreContainer {
+    position: absolute;
+    top: 60%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    display: none;
+    text-align: center;
+}
+
+#saveScoreBtn,
+#confirmSaveBtn {
+    padding: 12px 24px;
+    font-size: 18px;
+    font-family: "Papyrus", "Times New Roman", serif;
+    background-color: #333;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    margin-top: 10px;
+}
+
+#saveScoreBtn:hover,
+#confirmSaveBtn:hover {
+    background-color: #555;
+}
+
+#nameInputContainer {
+    display: none;
+    margin-top: 12px;
+}
+
+#playerName {
+    padding: 10px;
+    font-size: 18px;
+    border: 2px solid #ccc;
+    border-radius: 6px;
+    width: 200px;
+}

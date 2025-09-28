@@ -166,9 +166,20 @@ function drawGameOver() {
     ctx.font = `${canvas.width / 20}px Arial`;
   }
 
+  drawHighscores();
+
   const restartBtn = document.getElementById("restartBtn");
   if (restartBtn) {
     restartBtn.style.display = "block";
+  }
+
+  const saveScoreContainer = document.getElementById("saveScoreContainer");
+  if (saveScoreContainer) {
+    if (score > 0) {
+      saveScoreContainer.style.display = "block";
+    } else {
+      saveScoreContainer.style.display = "none";
+    }
   }
 }
 
@@ -266,6 +277,9 @@ function stopGame() {
     localStorage.setItem("highScoreDate", highScoreDate);
   }
 
+  // Also send score to server
+  // submitScoreToServer("Player1", score); // Replace "Player1" with real player name if available
+
   drawGameOver();
   restartCooldown = true;
   setTimeout(() => {
@@ -274,6 +288,8 @@ function stopGame() {
 }
 
 function resetGame() {
+  fetchHighscores();
+
   fishY = canvas.height / 2 - 24;
   velocity = 0;
   pipes = [];
@@ -287,6 +303,14 @@ function resetGame() {
   if (restartBtn) {
     restartBtn.style.display = "none";
   }
+
+  const saveScoreContainer = document.getElementById("saveScoreContainer");
+  const nameInputContainer = document.getElementById("nameInputContainer");
+  if (saveScoreContainer) saveScoreContainer.style.display = "none";
+  if (nameInputContainer) nameInputContainer.style.display = "none";
+
+  const saveBtn = document.getElementById("saveScoreBtn");
+  if (saveBtn) saveBtn.style.display = "inline-block";
 
   drawBackground();
   drawMeander();
@@ -376,7 +400,7 @@ document.addEventListener("keyup", (e) => {
   }
 });
 
-document.addEventListener(
+canvas.addEventListener(
   "touchstart",
   (e) => {
     e.preventDefault();
@@ -393,7 +417,7 @@ document.addEventListener(
   { passive: false }
 );
 
-document.addEventListener(
+canvas.addEventListener(
   "touchend",
   (e) => {
     e.preventDefault();
@@ -402,9 +426,84 @@ document.addEventListener(
   { passive: false }
 );
 
-document.addEventListener("touchmove", (e) => e.preventDefault(), {
+canvas.addEventListener("touchmove", (e) => e.preventDefault(), {
   passive: false,
 });
+
+// --- Server integration for highscores ---
+function submitScoreToServer(playerName, scoreValue) {
+  fetch("submit_score.php", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ player: playerName, score: scoreValue }),
+  })
+    .then((r) => r.json())
+    .then((res) => {
+      if (res.success) {
+        fetchHighscores();
+      } else {
+        console.warn("Save failed", res);
+      }
+    })
+    .catch((err) => console.error("Network error", err));
+}
+
+let highscores = [];
+
+function fetchHighscores(limit = 10) {
+  fetch(`get_highscores.php?limit=${limit}`)
+    .then((r) => r.json())
+    .then((data) => {
+      highscores = data;
+    })
+    .catch((e) => console.error("Cannot fetch highscores", e));
+}
+
+function drawHighscores() {
+  if (!highscores || highscores.length === 0) return;
+  ctx.font = `${canvas.width / 20}px Arial`;
+  ctx.fillStyle = "yellow";
+  ctx.textAlign = "center";
+  ctx.fillText("Top Scores", canvas.width / 2, canvas.height / 2 + 100);
+  ctx.font = `${canvas.width / 30}px Arial`;
+  highscores.forEach((row, index) => {
+    ctx.fillText(
+      `${index + 1}. ${row.player}: ${row.score}`,
+      canvas.width / 2,
+      canvas.height / 2 + 140 + index * 30
+    );
+  });
+}
+
+const saveScoreContainer = document.getElementById("saveScoreContainer");
+const saveScoreBtn = document.getElementById("saveScoreBtn");
+const nameInputContainer = document.getElementById("nameInputContainer");
+const confirmSaveBtn = document.getElementById("confirmSaveBtn");
+const playerNameInput = document.getElementById("playerName");
+
+if (saveScoreBtn) {
+  saveScoreBtn.addEventListener("click", (e) => {
+    e.stopPropagation();
+    nameInputContainer.style.display = "block";
+    saveScoreBtn.style.display = "none"; // hide the save button once clicked
+    playerNameInput.focus();
+  });
+}
+
+if (confirmSaveBtn) {
+  confirmSaveBtn.addEventListener("click", () => {
+    const playerName = playerNameInput.value.trim();
+    if (playerName) {
+      submitScoreToServer(playerName, score);
+      saveScoreContainer.style.display = "none";
+      nameInputContainer.style.display = "none";
+      saveScoreBtn.style.display = "inline-block"; // show save button again for next time
+      playerNameInput.value = "";
+    } else {
+      alert("Please enter your name!");
+    }
+  });
+}
 
 // Initialize on fish image load
 fishImg.onload = () => {
