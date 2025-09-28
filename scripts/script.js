@@ -11,7 +11,7 @@ const meanderOriginalWidth = 193;
 const meanderOriginalHeight = 108;
 
 const pipeWidth = 100;
-const pipeGap = 200;
+const pipeGap = 250;
 
 // Physics constants
 const GRAVITY = 0.5;
@@ -218,8 +218,8 @@ function checkCollision() {
   for (let i = 0; i < pipes.length; i++) {
     let pipe = pipes[i];
     if (
-      fishX + hitboxMargin < pipe.x + pipeWidth &&
-      fishX + fishWidth - hitboxMargin > pipe.x &&
+      fishX + hitboxMargin + 10 < pipe.x + pipeWidth &&
+      fishX + fishWidth - hitboxMargin - 10 > pipe.x &&
       fishY + hitboxMargin < pipe.y + canvas.height &&
       fishY + fishHeight - hitboxMargin > pipe.y
     ) {
