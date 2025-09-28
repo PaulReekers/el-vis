@@ -26,6 +26,7 @@ function resizeCanvas() {
   canvas.width = newWidth;
   canvas.height = newHeight;
   fishY = canvas.height / 2 - 24;
+  // 20% van originele hoogte, schaal met canvas-breedte zodat verhouding behouden blijft
   meanderHeight =
     meanderOriginalHeight * 0.2 * (canvas.width / meanderOriginalWidth);
 }
@@ -53,7 +54,6 @@ let meanderX = 0;
 
 // Fish settings
 let fishX = 100;
-// let fishY = canvas.height / 2 - 24; // 24 is de helft van de hoogte van de vis
 let gravity = 0.4;
 let lift = -4;
 let velocity = 0;
@@ -149,8 +149,6 @@ document.addEventListener("touchmove", (e) => e.preventDefault(), {
   passive: false,
 });
 
-// Removed R key restart listener, replaced with Space logic above.
-
 const hitboxMargin = 11; // marge om dichter bij de pipes te kunnen
 
 function drawBackground() {
@@ -176,6 +174,7 @@ function drawFish(customY = fishY) {
 }
 function idleLoop() {
   drawBackground();
+  drawMeander();
   idleOffset += idleDirection * 0.5;
   if (idleOffset > 5 || idleOffset < -5) {
     idleDirection *= -1;
@@ -193,20 +192,19 @@ function drawPipes() {
 }
 
 function drawMeander() {
-  ctx.drawImage(
-    meanderImg,
-    meanderX,
-    canvas.height - meanderHeight,
-    canvas.width,
-    meanderHeight
-  );
-  ctx.drawImage(
-    meanderImg,
-    meanderX + canvas.width,
-    canvas.height - meanderHeight,
-    canvas.width,
-    meanderHeight
-  );
+  // schaal breedte in verhouding tot meanderHeight
+  const meanderWidth =
+    meanderOriginalWidth * (meanderHeight / meanderOriginalHeight);
+  // tegel de meander horizontaal; start bij meanderX en vul tot buiten het canvas
+  for (let x = meanderX; x < canvas.width + meanderWidth; x += meanderWidth) {
+    ctx.drawImage(
+      meanderImg,
+      x,
+      canvas.height - meanderHeight,
+      meanderWidth,
+      meanderHeight
+    );
+  }
 }
 
 function updatePipes() {
@@ -217,14 +215,21 @@ function updatePipes() {
       y: topPipeHeight - canvas.height,
       scored: false,
     }); // bovenste pijp
-    pipes.push({ x: canvas.width, y: topPipeHeight + pipeGap, scored: false }); // onderste pijp
+    pipes.push({
+      x: canvas.width,
+      y: topPipeHeight + pipeGap,
+      scored: false,
+    }); // onderste pijp
   }
 
   pipes.forEach((pipe) => (pipe.x -= pipeSpeed));
 
+  // Meander laten meeschuiven en wrap op basis van de getegelde breedte
+  const meanderWidth =
+    meanderOriginalWidth * (meanderHeight / meanderOriginalHeight);
   meanderX -= pipeSpeed;
-  if (meanderX <= -canvas.width) {
-    meanderX = 0;
+  if (meanderX <= -meanderWidth) {
+    meanderX += meanderWidth;
   }
 
   // Score verhogen wanneer de vis voorbij de pijp gaat
@@ -277,6 +282,7 @@ function resetGame() {
     restartBtn.style.display = "none";
   }
   drawBackground();
+  drawMeander();
   drawFish();
 }
 function drawScore() {
@@ -289,6 +295,7 @@ function drawScore() {
 function drawGameOver() {
   drawBackground();
   drawPipes();
+  drawMeander();
   drawFish();
 
   ctx.fillStyle = "rgba(0,0,0,0.3)";
@@ -339,5 +346,6 @@ function gameLoop() {
 fishImg.onload = () => {
   resizeCanvas();
   drawBackground();
+  drawMeander();
   idleLoop();
 };
