@@ -58,8 +58,8 @@ let meanderX = 0;
 
 // Fish settings
 let fishX = 100;
-let gravity = 0.4;
-let lift = -4;
+let gravity = 0.5; // geleidelijke zwaartekracht
+let lift = -7; // snelle flap omhoog
 let velocity = 0;
 let isFlapping = false;
 // Idle animation variables
@@ -75,9 +75,10 @@ let restartCooldown = false;
 let pipes = [];
 let pipeWidth = 100;
 let pipeGap = 200;
-let pipeSpeed = 2;
+let pipeSpeed = 4;
 
 let pipesSpawned = 0;
+let gameStartTime = null;
 
 let score = 0;
 let gameOver = false;
@@ -85,6 +86,7 @@ let gameOver = false;
 function startGame() {
   if (gameStarted) return;
   gameStarted = true;
+  gameStartTime = Date.now();
   animId = requestAnimationFrame(gameLoop);
 }
 
@@ -201,6 +203,7 @@ function idleLoop() {
     idleDirection *= -1;
   }
   drawFish(fishY + idleOffset);
+  drawScore();
   if (!gameStarted) {
     requestAnimationFrame(idleLoop);
   }
@@ -229,28 +232,7 @@ function drawMeander() {
 }
 
 function updatePipes() {
-  if (pipes.length === 0 || pipes[pipes.length - 1].x < canvas.width - 300) {
-    let topPipeHeight = Math.random() * (canvas.height - pipeGap - 50) + 20;
-    pipes.push({
-      x: canvas.width,
-      y: topPipeHeight - canvas.height,
-      scored: false,
-    }); // bovenste pijp
-    pipes.push({
-      x: canvas.width,
-      y: topPipeHeight + pipeGap,
-      scored: false,
-    }); // onderste pijp
-
-    pipesSpawned++;
-    if (pipesSpawned % 5 === 0) {
-      pipeSpeed += 0.5; // of een waarde die goed voelt
-    }
-  }
-
-  pipes.forEach((pipe) => (pipe.x -= pipeSpeed));
-
-  // Meander laten meeschuiven en wrap op basis van de getegelde breedte
+  // Meander blijft bewegen, ook tijdens wachttijd
   const meanderWidth =
     meanderOriginalWidth * (meanderHeight / meanderOriginalHeight);
   meanderX -= pipeSpeed;
@@ -258,15 +240,39 @@ function updatePipes() {
     meanderX += meanderWidth;
   }
 
+  if (pipesSpawned === 0 && Date.now() - gameStartTime < 2000) {
+    return; // wacht 2 seconden voor de eerste pipe
+  }
+
+  if (pipes.length === 0 || pipes[pipes.length - 1].x < canvas.width - 300) {
+    let topPipeHeight = Math.random() * (canvas.height - pipeGap - 50) + 20;
+    pipes.push({
+      x: canvas.width,
+      y: topPipeHeight - canvas.height,
+      scored: false,
+    });
+    pipes.push({
+      x: canvas.width,
+      y: topPipeHeight + pipeGap,
+      scored: false,
+    });
+
+    pipesSpawned++;
+    if (pipesSpawned % 5 === 0) {
+      pipeSpeed += 0.5;
+    }
+  }
+
+  pipes.forEach((pipe) => (pipe.x -= pipeSpeed));
+
   const fishWidth = fishOriginalWidth * FISH_SCALE;
 
-  // Score verhogen wanneer de vis voorbij de pijp gaat
   for (let i = 0; i < pipes.length; i += 2) {
     let pipePair = pipes[i];
     if (!pipePair.scored && fishX + fishWidth > pipePair.x + pipeWidth / 2) {
       score++;
       pipePair.scored = true;
-      pipes[i + 1].scored = true; // markeer ook onderste pijp
+      pipes[i + 1].scored = true;
     }
   }
 
@@ -307,6 +313,10 @@ function resetGame() {
   velocity = 0;
   pipes = [];
   score = 0;
+  // Also reset pipe counter, speed, and start time so first pipe waits 2 seconds again
+  pipesSpawned = 0;
+  pipeSpeed = 4;
+  gameStartTime = Date.now();
   gameOver = false;
   const restartBtn = document.getElementById("restartBtn");
   if (restartBtn) {
