@@ -38,6 +38,17 @@ let pipesSpawned = 0;
 let gameStartTime = null;
 
 let score = 0;
+let highScore = 0;
+let highScoreDate = null;
+
+// Load high score from localStorage
+const savedHighScore = localStorage.getItem("highScore");
+const savedHighScoreDate = localStorage.getItem("highScoreDate");
+if (savedHighScore) {
+  highScore = parseInt(savedHighScore, 10);
+  highScoreDate = savedHighScoreDate;
+}
+
 let gameStarted = false;
 let gameOver = false;
 let animId = null;
@@ -148,7 +159,12 @@ function drawGameOver() {
   ctx.fillStyle = "white";
   ctx.font = `${canvas.width / 8}px "Papyrus", "Times New Roman", serif`;
   ctx.textAlign = "center";
-  ctx.fillText("Score: " + score, canvas.width / 2, canvas.height / 2 - 40);
+  ctx.fillText("Score: " + score, canvas.width / 2, canvas.height / 2 - 80);
+  ctx.font = `${canvas.width / 12}px "Papyrus", "Times New Roman", serif`;
+  ctx.fillText("Best: " + highScore, canvas.width / 2, canvas.height / 2);
+  if (highScoreDate) {
+    ctx.font = `${canvas.width / 20}px Arial`;
+  }
 
   const restartBtn = document.getElementById("restartBtn");
   if (restartBtn) {
@@ -242,6 +258,14 @@ function stopGame() {
   gameStarted = false;
   isFlapping = false;
   gameOver = true;
+
+  if (score > highScore) {
+    highScore = score;
+    highScoreDate = new Date().toLocaleString();
+    localStorage.setItem("highScore", highScore);
+    localStorage.setItem("highScoreDate", highScoreDate);
+  }
+
   drawGameOver();
   restartCooldown = true;
   setTimeout(() => {
