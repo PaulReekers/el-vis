@@ -2,7 +2,9 @@ const canvas = document.getElementById("gameCanvas");
 const ctx = canvas.getContext("2d");
 ctx.imageSmoothingEnabled = false;
 
-let fishY;
+const meanderOriginalWidth = 193;
+const meanderOriginalHeight = 108;
+let meanderHeight = 0; // hoogte van de meander onderaan
 
 function resizeCanvas() {
   const maxWidth = window.visualViewport
@@ -11,7 +13,7 @@ function resizeCanvas() {
   const maxHeight = window.visualViewport
     ? window.visualViewport.height
     : window.innerHeight;
-  const aspectRatio = 768 / 1024; // nieuwe verhouding (breedte / hoogte)
+  const aspectRatio = 768 / 1024;
 
   let newWidth = maxWidth;
   let newHeight = newWidth / aspectRatio;
@@ -24,6 +26,8 @@ function resizeCanvas() {
   canvas.width = newWidth;
   canvas.height = newHeight;
   fishY = canvas.height / 2 - 24;
+  meanderHeight =
+    meanderOriginalHeight * 0.2 * (canvas.width / meanderOriginalWidth);
 }
 
 window.addEventListener("resize", resizeCanvas);
@@ -41,6 +45,11 @@ pipeImg.src = "images/pipe.png";
 
 const bgImg = new Image();
 bgImg.src = "images/background.png";
+
+const meanderImg = new Image();
+meanderImg.src = "images/meander.png";
+
+let meanderX = 0;
 
 // Fish settings
 let fishX = 100;
@@ -83,7 +92,7 @@ function stopGame() {
   restartCooldown = true;
   setTimeout(() => {
     restartCooldown = false;
-  }, 3000);
+  }, 1000);
 }
 
 // Controls - Keyboard fallback for desktop only
@@ -142,7 +151,7 @@ document.addEventListener("touchmove", (e) => e.preventDefault(), {
 
 // Removed R key restart listener, replaced with Space logic above.
 
-const hitboxMargin = 10; // marge om dichter bij de pipes te kunnen
+const hitboxMargin = 11; // marge om dichter bij de pipes te kunnen
 
 function drawBackground() {
   ctx.drawImage(bgImg, 0, 0, canvas.width, canvas.height);
@@ -152,11 +161,16 @@ function drawFish(customY = fishY) {
   ctx.save();
   // Zet rotatiepunt in het midden van de vis
   ctx.translate(fishX + 34, customY + 24);
+  let angle = 0;
   if (isFlapping) {
-    ctx.rotate((-20 * Math.PI) / 180); // draai 20 graden omhoog
+    angle = (-20 * Math.PI) / 180; // omhoog
   } else if (velocity > 0) {
-    ctx.rotate((20 * Math.PI) / 180); // draai 20 graden omlaag
+    // hoe sneller naar beneden, hoe dichter bij 90 graden
+    const maxAngle = (90 * Math.PI) / 180;
+    const factor = Math.min(velocity / 10, 1); // schaal velocity tot max 1
+    angle = factor * maxAngle;
   }
+  ctx.rotate(angle);
   ctx.drawImage(fishImg, -34, -24, 68, 48);
   ctx.restore();
 }
@@ -178,6 +192,23 @@ function drawPipes() {
   });
 }
 
+function drawMeander() {
+  ctx.drawImage(
+    meanderImg,
+    meanderX,
+    canvas.height - meanderHeight,
+    canvas.width,
+    meanderHeight
+  );
+  ctx.drawImage(
+    meanderImg,
+    meanderX + canvas.width,
+    canvas.height - meanderHeight,
+    canvas.width,
+    meanderHeight
+  );
+}
+
 function updatePipes() {
   if (pipes.length === 0 || pipes[pipes.length - 1].x < canvas.width - 300) {
     let topPipeHeight = Math.random() * (canvas.height - pipeGap - 50) + 20;
@@ -190,6 +221,11 @@ function updatePipes() {
   }
 
   pipes.forEach((pipe) => (pipe.x -= pipeSpeed));
+
+  meanderX -= pipeSpeed;
+  if (meanderX <= -canvas.width) {
+    meanderX = 0;
+  }
 
   // Score verhogen wanneer de vis voorbij de pijp gaat
   for (let i = 0; i < pipes.length; i += 2) {
@@ -208,7 +244,12 @@ function updatePipes() {
 }
 
 function checkCollision() {
-  if (fishY + 48 > canvas.height || fishY < 0) {
+  if (fishY + 48 > canvas.height) {
+    stopGame();
+  }
+
+  // Collide with meander
+  if (fishY + 48 > canvas.height - meanderHeight) {
     stopGame();
   }
 
@@ -246,7 +287,11 @@ function drawScore() {
 }
 
 function drawGameOver() {
-  ctx.fillStyle = "rgba(0,0,0,0.5)";
+  drawBackground();
+  drawPipes();
+  drawFish();
+
+  ctx.fillStyle = "rgba(0,0,0,0.3)";
   ctx.fillRect(0, 0, canvas.width, canvas.height);
   ctx.fillStyle = "white";
   ctx.font = `${canvas.width / 8}px "Papyrus", "Times New Roman", serif`;
@@ -278,6 +323,7 @@ function gameLoop() {
   // Pipes
   updatePipes();
   drawPipes();
+  drawMeander();
 
   drawScore();
 
@@ -295,8 +341,3 @@ fishImg.onload = () => {
   drawBackground();
   idleLoop();
 };
-
-document.getElementById("restartBtn").addEventListener("click", () => {
-  resetGame();
-  idleLoop();
-});
