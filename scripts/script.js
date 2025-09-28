@@ -2,6 +2,10 @@ const canvas = document.getElementById("gameCanvas");
 const ctx = canvas.getContext("2d");
 ctx.imageSmoothingEnabled = false;
 
+const fishOriginalWidth = 158;
+const fishOriginalHeight = 56;
+const FISH_SCALE = 0.6; // één bron voor de schaal van de vis
+
 const meanderOriginalWidth = 193;
 const meanderOriginalHeight = 108;
 let meanderHeight = 0; // hoogte van de meander onderaan
@@ -159,8 +163,10 @@ function drawBackground() {
 
 function drawFish(customY = fishY) {
   ctx.save();
-  // Zet rotatiepunt in het midden van de vis
-  ctx.translate(fishX + 34, customY + 24);
+  // Bepaal huidige sprite-afmetingen en rotatiepunt op basis van schaal
+  const fishWidth = fishOriginalWidth * FISH_SCALE;
+  const fishHeight = fishOriginalHeight * FISH_SCALE;
+  ctx.translate(fishX + fishWidth / 2, customY + fishHeight / 2);
   let angle = 0;
   if (isFlapping) {
     angle = (-20 * Math.PI) / 180; // omhoog
@@ -171,12 +177,25 @@ function drawFish(customY = fishY) {
     angle = factor * maxAngle;
   }
   ctx.rotate(angle);
-  ctx.drawImage(fishImg, -34, -24, 68, 48);
+  ctx.drawImage(
+    fishImg,
+    -fishWidth / 2,
+    -fishHeight / 2,
+    fishWidth,
+    fishHeight
+  );
   ctx.restore();
 }
 function idleLoop() {
   drawBackground();
   drawMeander();
+  // Move meander horizontally, just like in updatePipes
+  const meanderWidth =
+    meanderOriginalWidth * (meanderHeight / meanderOriginalHeight);
+  meanderX -= pipeSpeed;
+  if (meanderX <= -meanderWidth) {
+    meanderX += meanderWidth;
+  }
   idleOffset += idleDirection * 0.5;
   if (idleOffset > 5 || idleOffset < -5) {
     idleDirection *= -1;
@@ -239,10 +258,12 @@ function updatePipes() {
     meanderX += meanderWidth;
   }
 
+  const fishWidth = fishOriginalWidth * FISH_SCALE;
+
   // Score verhogen wanneer de vis voorbij de pijp gaat
   for (let i = 0; i < pipes.length; i += 2) {
     let pipePair = pipes[i];
-    if (!pipePair.scored && fishX + 68 > pipePair.x + pipeWidth / 2) {
+    if (!pipePair.scored && fishX + fishWidth > pipePair.x + pipeWidth / 2) {
       score++;
       pipePair.scored = true;
       pipes[i + 1].scored = true; // markeer ook onderste pijp
@@ -256,12 +277,15 @@ function updatePipes() {
 }
 
 function checkCollision() {
-  if (fishY + 48 > canvas.height) {
+  const fishWidth = fishOriginalWidth * FISH_SCALE;
+  const fishHeight = fishOriginalHeight * FISH_SCALE;
+
+  if (fishY + fishHeight > canvas.height) {
     stopGame();
   }
 
   // Collide with meander
-  if (fishY + 48 > canvas.height - meanderHeight) {
+  if (fishY + fishHeight > canvas.height - meanderHeight) {
     stopGame();
   }
 
@@ -269,9 +293,9 @@ function checkCollision() {
     let pipe = pipes[i];
     if (
       fishX + hitboxMargin < pipe.x + pipeWidth &&
-      fishX + 68 - hitboxMargin > pipe.x &&
+      fishX + fishWidth - hitboxMargin > pipe.x &&
       fishY + hitboxMargin < pipe.y + canvas.height &&
-      fishY + 48 - hitboxMargin > pipe.y
+      fishY + fishHeight - hitboxMargin > pipe.y // iets kleinere hitbox in de hoogte
     ) {
       stopGame();
     }
@@ -279,7 +303,7 @@ function checkCollision() {
 }
 
 function resetGame() {
-  fishY = 150;
+  fishY = canvas.height / 2 - 24;
   velocity = 0;
   pipes = [];
   score = 0;
