@@ -2,14 +2,61 @@ const canvas = document.getElementById("gameCanvas");
 const ctx = canvas.getContext("2d");
 ctx.imageSmoothingEnabled = false;
 
+// Asset dimensions and scaling
 const fishOriginalWidth = 158;
 const fishOriginalHeight = 56;
-const FISH_SCALE = 0.6; // één bron voor de schaal van de vis
+const FISH_SCALE = 0.6;
 
 const meanderOriginalWidth = 193;
 const meanderOriginalHeight = 108;
-let meanderHeight = 0; // hoogte van de meander onderaan
 
+const pipeWidth = 100;
+const pipeGap = 200;
+
+// Physics constants
+const GRAVITY = 0.5;
+const LIFT = -7;
+
+// Hitbox margin for collision detection
+const hitboxMargin = 11;
+
+// State variables
+let fishX = 100;
+let fishY = 0;
+let velocity = 0;
+let isFlapping = false;
+
+let idleOffset = 0;
+let idleDirection = 1;
+
+let meanderHeight = 0;
+let meanderX = 0;
+
+let pipes = [];
+let pipeSpeed = 4;
+let pipesSpawned = 0;
+let gameStartTime = null;
+
+let score = 0;
+let gameStarted = false;
+let gameOver = false;
+let animId = null;
+let restartCooldown = false;
+
+// Images
+const fishImg = new Image();
+fishImg.src = "images/el-vis.png";
+
+const pipeImg = new Image();
+pipeImg.src = "images/pipe.png";
+
+const bgImg = new Image();
+bgImg.src = "images/background.png";
+
+const meanderImg = new Image();
+meanderImg.src = "images/meander.png";
+
+// Utility function to resize canvas and recalculate scaling
 function resizeCanvas() {
   const maxWidth = window.visualViewport
     ? window.visualViewport.width
@@ -30,59 +77,158 @@ function resizeCanvas() {
   canvas.width = newWidth;
   canvas.height = newHeight;
   fishY = canvas.height / 2 - 24;
-  // 20% van originele hoogte, schaal met canvas-breedte zodat verhouding behouden blijft
   meanderHeight =
     meanderOriginalHeight * 0.2 * (canvas.width / meanderOriginalWidth);
 }
 
-window.addEventListener("resize", resizeCanvas);
-window.addEventListener("orientationchange", () => {
-  setTimeout(resizeCanvas, 200);
-});
-resizeCanvas();
+// Drawing functions
+function drawBackground() {
+  ctx.drawImage(bgImg, 0, 0, canvas.width, canvas.height);
+}
 
-// Afbeeldingen
-const fishImg = new Image();
-fishImg.src = "images/el-vis.png";
+function drawFish(customY = fishY) {
+  ctx.save();
+  const fishWidth = fishOriginalWidth * FISH_SCALE;
+  const fishHeight = fishOriginalHeight * FISH_SCALE;
+  ctx.translate(fishX + fishWidth / 2, customY + fishHeight / 2);
+  let angle = 0;
+  if (isFlapping) {
+    angle = (-20 * Math.PI) / 180;
+  } else if (velocity > 0) {
+    const maxAngle = (90 * Math.PI) / 180;
+    const factor = Math.min(velocity / 10, 1);
+    angle = factor * maxAngle;
+  }
+  ctx.rotate(angle);
+  ctx.drawImage(
+    fishImg,
+    -fishWidth / 2,
+    -fishHeight / 2,
+    fishWidth,
+    fishHeight
+  );
+  ctx.restore();
+}
 
-const pipeImg = new Image();
-pipeImg.src = "images/pipe.png";
+function drawPipes() {
+  pipes.forEach((pipe) => {
+    ctx.drawImage(pipeImg, pipe.x, pipe.y, pipeWidth, canvas.height);
+  });
+}
 
-const bgImg = new Image();
-bgImg.src = "images/background.png";
+function drawMeander() {
+  const meanderWidth =
+    meanderOriginalWidth * (meanderHeight / meanderOriginalHeight);
+  for (let x = meanderX; x < canvas.width + meanderWidth; x += meanderWidth) {
+    ctx.drawImage(
+      meanderImg,
+      x,
+      canvas.height - meanderHeight,
+      meanderWidth,
+      meanderHeight
+    );
+  }
+}
 
-const meanderImg = new Image();
-meanderImg.src = "images/meander.png";
+function drawScore() {
+  ctx.fillStyle = "white";
+  ctx.font = `${canvas.width / 10}px "Papyrus", "Times New Roman", serif`;
+  ctx.textAlign = "center";
+  ctx.fillText(score, canvas.width / 2, canvas.height * 0.2);
+}
 
-let meanderX = 0;
+function drawGameOver() {
+  drawBackground();
+  drawPipes();
+  drawMeander();
+  drawFish();
 
-// Fish settings
-let fishX = 100;
-let gravity = 0.5; // geleidelijke zwaartekracht
-let lift = -7; // snelle flap omhoog
-let velocity = 0;
-let isFlapping = false;
-// Idle animation variables
-let idleOffset = 0;
-let idleDirection = 1;
+  ctx.fillStyle = "rgba(0,0,0,0.3)";
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  ctx.fillStyle = "white";
+  ctx.font = `${canvas.width / 8}px "Papyrus", "Times New Roman", serif`;
+  ctx.textAlign = "center";
+  ctx.fillText("Score: " + score, canvas.width / 2, canvas.height / 2 - 40);
 
-let gameStarted = false;
-let animId = null;
+  const restartBtn = document.getElementById("restartBtn");
+  if (restartBtn) {
+    restartBtn.style.display = "block";
+  }
+}
 
-let restartCooldown = false;
+// Update functions
+function updatePipes() {
+  const meanderWidth =
+    meanderOriginalWidth * (meanderHeight / meanderOriginalHeight);
+  meanderX -= pipeSpeed;
+  if (meanderX <= -meanderWidth) {
+    meanderX += meanderWidth;
+  }
 
-// Pipes
-let pipes = [];
-let pipeWidth = 100;
-let pipeGap = 200;
-let pipeSpeed = 4;
+  if (pipesSpawned === 0 && Date.now() - gameStartTime < 2000) {
+    return;
+  }
 
-let pipesSpawned = 0;
-let gameStartTime = null;
+  if (pipes.length === 0 || pipes[pipes.length - 1].x < canvas.width - 300) {
+    let topPipeHeight = Math.random() * (canvas.height - pipeGap - 50) + 20;
+    pipes.push({
+      x: canvas.width,
+      y: topPipeHeight - canvas.height,
+      scored: false,
+    });
+    pipes.push({ x: canvas.width, y: topPipeHeight + pipeGap, scored: false });
 
-let score = 0;
-let gameOver = false;
+    pipesSpawned++;
+    if (pipesSpawned % 5 === 0) {
+      pipeSpeed += 0.5;
+    }
+  }
 
+  pipes.forEach((pipe) => (pipe.x -= pipeSpeed));
+
+  const fishWidth = fishOriginalWidth * FISH_SCALE;
+  for (let i = 0; i < pipes.length; i += 2) {
+    let pipePair = pipes[i];
+    if (!pipePair.scored && fishX + fishWidth > pipePair.x + pipeWidth / 2) {
+      score++;
+      pipePair.scored = true;
+      pipes[i + 1].scored = true;
+    }
+  }
+
+  if (pipes[0].x + pipeWidth < 0) {
+    pipes.shift();
+    pipes.shift();
+  }
+}
+
+// Collision detection
+function checkCollision() {
+  const fishWidth = fishOriginalWidth * FISH_SCALE;
+  const fishHeight = fishOriginalHeight * FISH_SCALE;
+
+  if (fishY + fishHeight > canvas.height) {
+    stopGame();
+  }
+
+  if (fishY + fishHeight > canvas.height - meanderHeight) {
+    stopGame();
+  }
+
+  for (let i = 0; i < pipes.length; i++) {
+    let pipe = pipes[i];
+    if (
+      fishX + hitboxMargin < pipe.x + pipeWidth &&
+      fishX + fishWidth - hitboxMargin > pipe.x &&
+      fishY + hitboxMargin < pipe.y + canvas.height &&
+      fishY + fishHeight - hitboxMargin > pipe.y
+    ) {
+      stopGame();
+    }
+  }
+}
+
+// Game state functions
 function startGame() {
   if (gameStarted) return;
   gameStarted = true;
@@ -103,7 +249,87 @@ function stopGame() {
   }, 1000);
 }
 
-// Controls - Keyboard fallback for desktop only
+function resetGame() {
+  fishY = canvas.height / 2 - 24;
+  velocity = 0;
+  pipes = [];
+  score = 0;
+  pipesSpawned = 0;
+  pipeSpeed = 4;
+  gameStartTime = Date.now();
+  gameOver = false;
+
+  const restartBtn = document.getElementById("restartBtn");
+  if (restartBtn) {
+    restartBtn.style.display = "none";
+  }
+
+  drawBackground();
+  drawMeander();
+  drawFish();
+}
+
+// Main game loop
+function gameLoop() {
+  drawBackground();
+
+  if (gameOver) {
+    drawGameOver();
+    return;
+  }
+
+  if (isFlapping) {
+    velocity = LIFT;
+  } else {
+    velocity += GRAVITY;
+  }
+  fishY += velocity;
+  drawFish();
+
+  updatePipes();
+  drawPipes();
+  drawMeander();
+
+  drawScore();
+
+  checkCollision();
+
+  if (gameStarted) {
+    animId = requestAnimationFrame(gameLoop);
+  }
+}
+
+// Idle animation loop before game start
+function idleLoop() {
+  drawBackground();
+  drawMeander();
+
+  const meanderWidth =
+    meanderOriginalWidth * (meanderHeight / meanderOriginalHeight);
+  meanderX -= pipeSpeed;
+  if (meanderX <= -meanderWidth) {
+    meanderX += meanderWidth;
+  }
+
+  idleOffset += idleDirection * 0.5;
+  if (idleOffset > 5 || idleOffset < -5) {
+    idleDirection *= -1;
+  }
+
+  drawFish(fishY + idleOffset);
+  drawScore();
+
+  if (!gameStarted) {
+    requestAnimationFrame(idleLoop);
+  }
+}
+
+// Event listeners
+window.addEventListener("resize", resizeCanvas);
+window.addEventListener("orientationchange", () => {
+  setTimeout(resizeCanvas, 200);
+});
+
 document.addEventListener("keydown", (e) => {
   if (e.code === "Space" || e.key === " " || e.key === "Spacebar") {
     e.preventDefault();
@@ -126,7 +352,6 @@ document.addEventListener("keyup", (e) => {
   }
 });
 
-// Controls - Touch for mobile
 document.addEventListener(
   "touchstart",
   (e) => {
@@ -157,233 +382,7 @@ document.addEventListener("touchmove", (e) => e.preventDefault(), {
   passive: false,
 });
 
-const hitboxMargin = 11; // marge om dichter bij de pipes te kunnen
-
-function drawBackground() {
-  ctx.drawImage(bgImg, 0, 0, canvas.width, canvas.height);
-}
-
-function drawFish(customY = fishY) {
-  ctx.save();
-  // Bepaal huidige sprite-afmetingen en rotatiepunt op basis van schaal
-  const fishWidth = fishOriginalWidth * FISH_SCALE;
-  const fishHeight = fishOriginalHeight * FISH_SCALE;
-  ctx.translate(fishX + fishWidth / 2, customY + fishHeight / 2);
-  let angle = 0;
-  if (isFlapping) {
-    angle = (-20 * Math.PI) / 180; // omhoog
-  } else if (velocity > 0) {
-    // hoe sneller naar beneden, hoe dichter bij 90 graden
-    const maxAngle = (90 * Math.PI) / 180;
-    const factor = Math.min(velocity / 10, 1); // schaal velocity tot max 1
-    angle = factor * maxAngle;
-  }
-  ctx.rotate(angle);
-  ctx.drawImage(
-    fishImg,
-    -fishWidth / 2,
-    -fishHeight / 2,
-    fishWidth,
-    fishHeight
-  );
-  ctx.restore();
-}
-function idleLoop() {
-  drawBackground();
-  drawMeander();
-  // Move meander horizontally, just like in updatePipes
-  const meanderWidth =
-    meanderOriginalWidth * (meanderHeight / meanderOriginalHeight);
-  meanderX -= pipeSpeed;
-  if (meanderX <= -meanderWidth) {
-    meanderX += meanderWidth;
-  }
-  idleOffset += idleDirection * 0.5;
-  if (idleOffset > 5 || idleOffset < -5) {
-    idleDirection *= -1;
-  }
-  drawFish(fishY + idleOffset);
-  drawScore();
-  if (!gameStarted) {
-    requestAnimationFrame(idleLoop);
-  }
-}
-
-function drawPipes() {
-  pipes.forEach((pipe) => {
-    ctx.drawImage(pipeImg, pipe.x, pipe.y, pipeWidth, canvas.height);
-  });
-}
-
-function drawMeander() {
-  // schaal breedte in verhouding tot meanderHeight
-  const meanderWidth =
-    meanderOriginalWidth * (meanderHeight / meanderOriginalHeight);
-  // tegel de meander horizontaal; start bij meanderX en vul tot buiten het canvas
-  for (let x = meanderX; x < canvas.width + meanderWidth; x += meanderWidth) {
-    ctx.drawImage(
-      meanderImg,
-      x,
-      canvas.height - meanderHeight,
-      meanderWidth,
-      meanderHeight
-    );
-  }
-}
-
-function updatePipes() {
-  // Meander blijft bewegen, ook tijdens wachttijd
-  const meanderWidth =
-    meanderOriginalWidth * (meanderHeight / meanderOriginalHeight);
-  meanderX -= pipeSpeed;
-  if (meanderX <= -meanderWidth) {
-    meanderX += meanderWidth;
-  }
-
-  if (pipesSpawned === 0 && Date.now() - gameStartTime < 2000) {
-    return; // wacht 2 seconden voor de eerste pipe
-  }
-
-  if (pipes.length === 0 || pipes[pipes.length - 1].x < canvas.width - 300) {
-    let topPipeHeight = Math.random() * (canvas.height - pipeGap - 50) + 20;
-    pipes.push({
-      x: canvas.width,
-      y: topPipeHeight - canvas.height,
-      scored: false,
-    });
-    pipes.push({
-      x: canvas.width,
-      y: topPipeHeight + pipeGap,
-      scored: false,
-    });
-
-    pipesSpawned++;
-    if (pipesSpawned % 5 === 0) {
-      pipeSpeed += 0.5;
-    }
-  }
-
-  pipes.forEach((pipe) => (pipe.x -= pipeSpeed));
-
-  const fishWidth = fishOriginalWidth * FISH_SCALE;
-
-  for (let i = 0; i < pipes.length; i += 2) {
-    let pipePair = pipes[i];
-    if (!pipePair.scored && fishX + fishWidth > pipePair.x + pipeWidth / 2) {
-      score++;
-      pipePair.scored = true;
-      pipes[i + 1].scored = true;
-    }
-  }
-
-  if (pipes[0].x + pipeWidth < 0) {
-    pipes.shift();
-    pipes.shift();
-  }
-}
-
-function checkCollision() {
-  const fishWidth = fishOriginalWidth * FISH_SCALE;
-  const fishHeight = fishOriginalHeight * FISH_SCALE;
-
-  if (fishY + fishHeight > canvas.height) {
-    stopGame();
-  }
-
-  // Collide with meander
-  if (fishY + fishHeight > canvas.height - meanderHeight) {
-    stopGame();
-  }
-
-  for (let i = 0; i < pipes.length; i++) {
-    let pipe = pipes[i];
-    if (
-      fishX + hitboxMargin < pipe.x + pipeWidth &&
-      fishX + fishWidth - hitboxMargin > pipe.x &&
-      fishY + hitboxMargin < pipe.y + canvas.height &&
-      fishY + fishHeight - hitboxMargin > pipe.y // iets kleinere hitbox in de hoogte
-    ) {
-      stopGame();
-    }
-  }
-}
-
-function resetGame() {
-  fishY = canvas.height / 2 - 24;
-  velocity = 0;
-  pipes = [];
-  score = 0;
-  // Also reset pipe counter, speed, and start time so first pipe waits 2 seconds again
-  pipesSpawned = 0;
-  pipeSpeed = 4;
-  gameStartTime = Date.now();
-  gameOver = false;
-  const restartBtn = document.getElementById("restartBtn");
-  if (restartBtn) {
-    restartBtn.style.display = "none";
-  }
-  drawBackground();
-  drawMeander();
-  drawFish();
-}
-function drawScore() {
-  ctx.fillStyle = "white";
-  ctx.font = `${canvas.width / 10}px "Papyrus", "Times New Roman", serif`; // Grieks-achtig font
-  ctx.textAlign = "center";
-  ctx.fillText(score, canvas.width / 2, canvas.height * 0.2);
-}
-
-function drawGameOver() {
-  drawBackground();
-  drawPipes();
-  drawMeander();
-  drawFish();
-
-  ctx.fillStyle = "rgba(0,0,0,0.3)";
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
-  ctx.fillStyle = "white";
-  ctx.font = `${canvas.width / 8}px "Papyrus", "Times New Roman", serif`;
-  ctx.textAlign = "center";
-  ctx.fillText("Score: " + score, canvas.width / 2, canvas.height / 2 - 40);
-  const restartBtn = document.getElementById("restartBtn");
-  if (restartBtn) {
-    restartBtn.style.display = "block";
-  }
-}
-
-function gameLoop() {
-  drawBackground();
-
-  if (gameOver) {
-    drawGameOver();
-    return;
-  }
-
-  // Fish
-  if (isFlapping) {
-    velocity = lift;
-  } else {
-    velocity += gravity;
-  }
-  fishY += velocity;
-  drawFish();
-
-  // Pipes
-  updatePipes();
-  drawPipes();
-  drawMeander();
-
-  drawScore();
-
-  // Collision
-  checkCollision();
-
-  if (gameStarted) {
-    animId = requestAnimationFrame(gameLoop);
-  }
-}
-
-// Teken de vis direct na het laden van de afbeelding
+// Initialize on fish image load
 fishImg.onload = () => {
   resizeCanvas();
   drawBackground();
