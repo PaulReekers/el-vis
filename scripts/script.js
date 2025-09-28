@@ -212,7 +212,6 @@ function updatePipes() {
   if (pipesSpawned === 0 && Date.now() - gameStartTime < 2000) {
     return;
   }
-  q;
   if (
     pipes.length === 0 ||
     pipes[pipes.length - 1].x < canvas.width - PIPE_DISTANCE
