@@ -1,104 +1,64 @@
+// === Constants ===
 const canvas = document.getElementById("gameCanvas");
 const ctx = canvas.getContext("2d");
 ctx.imageSmoothingEnabled = false;
 
-// Asset dimensions and scaling
-const PIPE_DISTANCE = 400; // horizontale afstand tussen opeenvolgende pipes
+const PIPE_DISTANCE = 400;
 const fishOriginalWidth = 158;
 const fishOriginalHeight = 56;
 const FISH_SCALE = 0.6;
-
 const meanderOriginalWidth = 193;
 const meanderOriginalHeight = 108;
-
 const pipeWidth = 120;
 const pipeGap = 200;
 const PIPE_HITBOX_PADDING = 15;
-
-let DEBUG = false; // zet via console op true om debug hitboxes te tonen
-
-// Physics constants
 const GRAVITY = 0.5;
 const LIFT = -7;
-
-// Hitbox margin for collision detection
 const hitboxMargin = 11;
 
-// State variables
+let DEBUG = false; // Show debug hitboxes if true
+
+// === State variables ===
 let fishX = 100;
 let fishY = 0;
 let velocity = 0;
 let isFlapping = false;
-
 let idleOffset = 0;
 let idleDirection = 1;
-
 let meanderHeight = 0;
 let meanderX = 0;
-
 let pipes = [];
 let pipeSpeed = 4;
 let pipesSpawned = 0;
 let gameStartTime = null;
-
 let score = 0;
+let highscoresVisible = true;
+
+// === Highscore & Game State ===
 let highScore = 0;
 let highScoreDate = null;
-
-let highscoresVisible = true; // new state variable for highscores visibility
-
-// Load high score from localStorage
 const savedHighScore = localStorage.getItem("highScore");
 const savedHighScoreDate = localStorage.getItem("highScoreDate");
 if (savedHighScore) {
   highScore = parseInt(savedHighScore, 10);
   highScoreDate = savedHighScoreDate;
 }
-
 let gameStarted = false;
 let gameOver = false;
 let animId = null;
 let restartCooldown = false;
 
-// Images
+// === DOM references & Images ===
 const fishImg = new Image();
 fishImg.src = "images/el-vis.png";
-
 const pipeImg = new Image();
 pipeImg.src = "images/pipe.png";
-
 const bgImg = new Image();
 bgImg.src = "images/background.png";
-
 const meanderImg = new Image();
 meanderImg.src = "images/meander.png";
 
-// Utility function to resize canvas and recalculate scaling
-function resizeCanvas() {
-  const maxWidth = window.visualViewport
-    ? window.visualViewport.width
-    : window.innerWidth;
-  const maxHeight = window.visualViewport
-    ? window.visualViewport.height
-    : window.innerHeight;
-  const aspectRatio = 768 / 1024;
-
-  let newWidth = maxWidth;
-  let newHeight = newWidth / aspectRatio;
-
-  if (newHeight > maxHeight) {
-    newHeight = maxHeight;
-    newWidth = newHeight * aspectRatio;
-  }
-
-  canvas.width = newWidth;
-  canvas.height = newHeight;
-  fishY = canvas.height / 2 - 24;
-  meanderHeight =
-    meanderOriginalHeight * 0.2 * (canvas.width / meanderOriginalWidth);
-}
-
-// Drawing functions
+// === Drawing functions ===
 function drawBackground() {
   ctx.drawImage(bgImg, 0, 0, canvas.width, canvas.height);
 }
@@ -154,6 +114,22 @@ function drawScore() {
   ctx.fillText(score, canvas.width / 2, canvas.height * 0.2);
 }
 
+function drawHighscores() {
+  if (!highscores || highscores.length === 0) return;
+  ctx.font = `${canvas.width / 20}px Arial`;
+  ctx.fillStyle = "yellow";
+  ctx.textAlign = "center";
+  ctx.fillText("Top Scores", canvas.width / 2, canvas.height / 2 + 100);
+  ctx.font = `${canvas.width / 30}px Arial`;
+  highscores.slice(0, 5).forEach((row, index) => {
+    ctx.fillText(
+      `${index + 1}. ${row.player}: ${row.score}`,
+      canvas.width / 2,
+      canvas.height / 2 + 140 + index * 30
+    );
+  });
+}
+
 function drawGameOver() {
   drawBackground();
   drawPipes();
@@ -198,6 +174,65 @@ function drawGameOver() {
   if (playAgainBtn) {
     playAgainBtn.style.display = "block";
   }
+}
+
+// === Utility functions ===
+function resizeCanvas() {
+  const maxWidth = window.visualViewport
+    ? window.visualViewport.width
+    : window.innerWidth;
+  const maxHeight = window.visualViewport
+    ? window.visualViewport.height
+    : window.innerHeight;
+  const aspectRatio = 768 / 1024;
+
+  let newWidth = maxWidth;
+  let newHeight = newWidth / aspectRatio;
+
+  if (newHeight > maxHeight) {
+    newHeight = maxHeight;
+    newWidth = newHeight * aspectRatio;
+  }
+
+  canvas.width = newWidth;
+  canvas.height = newHeight;
+  fishY = canvas.height / 2 - 24;
+  meanderHeight =
+    meanderOriginalHeight * 0.2 * (canvas.width / meanderOriginalWidth);
+}
+
+function isUITarget(el) {
+  if (!el || !el.closest) return false;
+  return (
+    el.closest("#saveScoreContainer") ||
+    el.closest("#playAgainBtn") ||
+    el.closest("#restartBtn")
+  );
+}
+
+function drawDebugHitboxes() {
+  const fishWidth = fishOriginalWidth * FISH_SCALE;
+  const fishHeight = fishOriginalHeight * FISH_SCALE;
+  const fishCenterX = fishX + fishWidth / 2;
+  const fishCenterY = fishY + fishHeight / 2;
+  const fishRadius = Math.min(fishWidth, fishHeight) / 2.5;
+
+  ctx.beginPath();
+  ctx.arc(fishCenterX, fishCenterY, fishRadius, 0, 2 * Math.PI);
+  ctx.strokeStyle = "red";
+  ctx.lineWidth = 2;
+  ctx.stroke();
+
+  pipes.forEach((pipe) => {
+    ctx.strokeStyle = "lime";
+    ctx.lineWidth = 2;
+    ctx.strokeRect(
+      pipe.x + PIPE_HITBOX_PADDING,
+      pipe.y,
+      pipeWidth - PIPE_HITBOX_PADDING * 2,
+      canvas.height
+    );
+  });
 }
 
 // Update functions
@@ -246,32 +281,6 @@ function updatePipes() {
     pipes.shift();
     pipes.shift();
   }
-}
-
-// Debug functie om hitboxes te tekenen
-function drawDebugHitboxes() {
-  const fishWidth = fishOriginalWidth * FISH_SCALE;
-  const fishHeight = fishOriginalHeight * FISH_SCALE;
-  const fishCenterX = fishX + fishWidth / 2;
-  const fishCenterY = fishY + fishHeight / 2;
-  const fishRadius = Math.min(fishWidth, fishHeight) / 2.5;
-
-  ctx.beginPath();
-  ctx.arc(fishCenterX, fishCenterY, fishRadius, 0, 2 * Math.PI);
-  ctx.strokeStyle = "red";
-  ctx.lineWidth = 2;
-  ctx.stroke();
-
-  pipes.forEach((pipe) => {
-    ctx.strokeStyle = "lime";
-    ctx.lineWidth = 2;
-    ctx.strokeRect(
-      pipe.x + PIPE_HITBOX_PADDING,
-      pipe.y,
-      pipeWidth - PIPE_HITBOX_PADDING * 2,
-      canvas.height
-    );
-  });
 }
 
 // Collision detection
@@ -439,24 +448,15 @@ function idleLoop() {
   }
 }
 
-// Helper function to detect UI touches
-function isUITarget(el) {
-  if (!el || !el.closest) return false;
-  return (
-    el.closest("#saveScoreContainer") ||
-    el.closest("#playAgainBtn") ||
-    el.closest("#restartBtn")
-  );
-}
-
-// Event listeners
+// === Event listeners (window/document) ===
 window.addEventListener("resize", resizeCanvas);
 window.addEventListener("orientationchange", () => {
   setTimeout(resizeCanvas, 200);
 });
 
+// Keyboard controls
 document.addEventListener("keydown", (e) => {
-  if (gameOver) return; // block input when game over
+  if (gameOver) return;
   if (e.code === "Space" || e.key === " " || e.key === "Spacebar") {
     e.preventDefault();
     if (gameOver && !restartCooldown) {
@@ -478,13 +478,14 @@ document.addEventListener("keyup", (e) => {
   }
 });
 
+// Touch controls
 document.addEventListener(
   "touchstart",
   (e) => {
     const t = e.target;
-    if (isUITarget(t)) return; // allow UI buttons to receive touch/click
-    if (gameOver) return; // block game control when game over
-    e.preventDefault(); // only prevent default for game touches
+    if (isUITarget(t)) return;
+    if (gameOver) return;
+    e.preventDefault();
     startGame();
     isFlapping = true;
   },
@@ -495,7 +496,7 @@ document.addEventListener(
   "touchend",
   (e) => {
     const t = e.target;
-    if (isUITarget(t)) return; // don't block UI button clicks
+    if (isUITarget(t)) return;
     e.preventDefault();
     isFlapping = false;
   },
@@ -506,7 +507,7 @@ document.addEventListener(
   "touchmove",
   (e) => {
     const t = e.target;
-    if (isUITarget(t)) return; // allow scrolling/interaction inside UI
+    if (isUITarget(t)) return;
     e.preventDefault();
   },
   { passive: false }
@@ -542,53 +543,12 @@ function fetchHighscores(limit = 10) {
     .catch((e) => console.error("Cannot fetch highscores", e));
 }
 
-function drawHighscores() {
-  if (!highscores || highscores.length === 0) return;
-  ctx.font = `${canvas.width / 20}px Arial`;
-  ctx.fillStyle = "yellow";
-  ctx.textAlign = "center";
-  ctx.fillText("Top Scores", canvas.width / 2, canvas.height / 2 + 100);
-  ctx.font = `${canvas.width / 30}px Arial`;
-  highscores.slice(0, 5).forEach((row, index) => {
-    ctx.fillText(
-      `${index + 1}. ${row.player}: ${row.score}`,
-      canvas.width / 2,
-      canvas.height / 2 + 140 + index * 30
-    );
-  });
-}
-
+// === UI DOM refs & event listeners ===
 const saveScoreContainer = document.getElementById("saveScoreContainer");
 const saveScoreBtn = document.getElementById("saveScoreBtn");
 const nameInputContainer = document.getElementById("nameInputContainer");
 const confirmSaveBtn = document.getElementById("confirmSaveBtn");
 const playerNameInput = document.getElementById("playerName");
-
-function savePlayerScore() {
-  const playerName = playerNameInput.value.trim();
-
-  if (!playerName) {
-    alert("Please enter your name!");
-    return;
-  }
-
-  if (playerName.length > 10) {
-    alert("Name must be max 10 characters!");
-    return;
-  }
-
-  submitScoreToServer(playerName, score);
-
-  // Hide score submission UI after saving this round
-  saveScoreContainer.style.display = "none";
-  nameInputContainer.style.display = "none";
-
-  playerNameInput.value = "";
-
-  // Fully reset game state and go back to idle screen after saving score
-  resetGame();
-  idleLoop();
-}
 
 if (saveScoreBtn) {
   saveScoreBtn.addEventListener("click", (e) => {
@@ -615,7 +575,6 @@ if (playerNameInput) {
   });
 }
 
-// Voeg een event listener toe aan de playAgainBtn
 const playAgainBtn = document.getElementById("playAgainBtn");
 if (playAgainBtn) {
   playAgainBtn.addEventListener("click", (e) => {
@@ -625,6 +584,32 @@ if (playAgainBtn) {
     gameStarted = false;
     idleLoop();
   });
+}
+
+function savePlayerScore() {
+  const playerName = playerNameInput.value.trim();
+
+  if (!playerName) {
+    alert("Please enter your name!");
+    return;
+  }
+
+  if (playerName.length > 10) {
+    alert("Name must be max 10 characters!");
+    return;
+  }
+
+  submitScoreToServer(playerName, score);
+
+  // Hide score submission UI after saving this round
+  saveScoreContainer.style.display = "none";
+  nameInputContainer.style.display = "none";
+
+  playerNameInput.value = "";
+
+  // Fully reset game state and go back to idle screen after saving score
+  resetGame();
+  idleLoop();
 }
 
 // Initialize on fish image load
