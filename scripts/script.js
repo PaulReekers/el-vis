@@ -41,6 +41,8 @@ let score = 0;
 let highScore = 0;
 let highScoreDate = null;
 
+let highscoresVisible = true; // new state variable for highscores visibility
+
 // Load high score from localStorage
 const savedHighScore = localStorage.getItem("highScore");
 const savedHighScoreDate = localStorage.getItem("highScoreDate");
@@ -173,13 +175,35 @@ function drawGameOver() {
     restartBtn.style.display = "block";
   }
 
+  const baseY = canvas.height / 2 + 140 + 5 * 30 + 40; // below the 5 scores
+
   const saveScoreContainer = document.getElementById("saveScoreContainer");
   if (saveScoreContainer) {
     if (score > 0) {
-      saveScoreContainer.style.display = "block";
+      saveScoreContainer.style.display = "flex";
+      saveScoreContainer.style.position = "absolute";
+      saveScoreContainer.style.top = `${baseY}px`;
+      saveScoreContainer.style.left = "50%";
+      saveScoreContainer.style.transform = "translateX(-50%)";
+
+      const saveBtnEl = document.getElementById("saveScoreBtn");
+      const nameInputEl = document.getElementById("nameInputContainer");
+      const playerNameEl = document.getElementById("playerName");
+      if (saveBtnEl) saveBtnEl.style.display = "inline-block"; // show the Save button again each game over
+      if (nameInputEl) nameInputEl.style.display = "none"; // hide input until Save is clicked
+      if (playerNameEl) playerNameEl.value = ""; // clear previous name
     } else {
       saveScoreContainer.style.display = "none";
     }
+  }
+
+  const playAgainBtn = document.getElementById("playAgainBtn");
+  if (playAgainBtn) {
+    playAgainBtn.style.display = "block";
+    playAgainBtn.style.position = "absolute";
+    playAgainBtn.style.top = `${baseY + 60}px`;
+    playAgainBtn.style.left = "50%";
+    playAgainBtn.style.transform = "translateX(-50%)";
   }
 }
 
@@ -259,8 +283,11 @@ function checkCollision() {
 function startGame() {
   if (gameStarted) return;
   gameStarted = true;
+  const playAgainBtn = document.getElementById("playAgainBtn");
+  if (playAgainBtn) playAgainBtn.style.display = "none";
   gameStartTime = Date.now();
   animId = requestAnimationFrame(gameLoop);
+  highscoresVisible = false;
 }
 
 function stopGame() {
@@ -276,9 +303,6 @@ function stopGame() {
     localStorage.setItem("highScore", highScore);
     localStorage.setItem("highScoreDate", highScoreDate);
   }
-
-  // Also send score to server
-  // submitScoreToServer("Player1", score); // Replace "Player1" with real player name if available
 
   drawGameOver();
   restartCooldown = true;
@@ -298,6 +322,7 @@ function resetGame() {
   pipeSpeed = 4;
   gameStartTime = Date.now();
   gameOver = false;
+  highscoresVisible = true;
 
   const restartBtn = document.getElementById("restartBtn");
   if (restartBtn) {
@@ -309,8 +334,11 @@ function resetGame() {
   if (saveScoreContainer) saveScoreContainer.style.display = "none";
   if (nameInputContainer) nameInputContainer.style.display = "none";
 
-  const saveBtn = document.getElementById("saveScoreBtn");
-  if (saveBtn) saveBtn.style.display = "inline-block";
+  // const saveScoreBtn = document.getElementById("saveScoreBtn");
+  // if (saveScoreBtn) saveScoreBtn.style.display = "inline-block";
+
+  const playAgainBtn = document.getElementById("playAgainBtn");
+  if (playAgainBtn) playAgainBtn.style.display = "none";
 
   drawBackground();
   drawMeander();
@@ -366,10 +394,23 @@ function idleLoop() {
 
   drawFish(fishY + idleOffset);
   drawScore();
+  if (highscoresVisible) {
+    drawHighscores();
+  }
 
   if (!gameStarted) {
     requestAnimationFrame(idleLoop);
   }
+}
+
+// Helper function to detect UI touches
+function isUITarget(el) {
+  if (!el || !el.closest) return false;
+  return (
+    el.closest("#saveScoreContainer") ||
+    el.closest("#playAgainBtn") ||
+    el.closest("#restartBtn")
+  );
 }
 
 // Event listeners
@@ -379,6 +420,7 @@ window.addEventListener("orientationchange", () => {
 });
 
 document.addEventListener("keydown", (e) => {
+  if (gameOver) return; // block input when game over
   if (e.code === "Space" || e.key === " " || e.key === "Spacebar") {
     e.preventDefault();
     if (gameOver && !restartCooldown) {
@@ -400,35 +442,39 @@ document.addEventListener("keyup", (e) => {
   }
 });
 
-canvas.addEventListener(
+document.addEventListener(
   "touchstart",
   (e) => {
-    e.preventDefault();
-    if (gameOver && !restartCooldown) {
-      resetGame();
-      gameOver = false;
-      gameStarted = false;
-      idleLoop();
-      return;
-    }
+    const t = e.target;
+    if (isUITarget(t)) return; // allow UI buttons to receive touch/click
+    if (gameOver) return; // block game control when game over
+    e.preventDefault(); // only prevent default for game touches
     startGame();
     isFlapping = true;
   },
   { passive: false }
 );
 
-canvas.addEventListener(
+document.addEventListener(
   "touchend",
   (e) => {
+    const t = e.target;
+    if (isUITarget(t)) return; // don't block UI button clicks
     e.preventDefault();
     isFlapping = false;
   },
   { passive: false }
 );
 
-canvas.addEventListener("touchmove", (e) => e.preventDefault(), {
-  passive: false,
-});
+document.addEventListener(
+  "touchmove",
+  (e) => {
+    const t = e.target;
+    if (isUITarget(t)) return; // allow scrolling/interaction inside UI
+    e.preventDefault();
+  },
+  { passive: false }
+);
 
 // --- Server integration for highscores ---
 function submitScoreToServer(playerName, scoreValue) {
@@ -441,6 +487,7 @@ function submitScoreToServer(playerName, scoreValue) {
     .then((res) => {
       if (res.success) {
         fetchHighscores();
+        drawGameOver(); // redraw to include the updated high score list
       } else {
         console.warn("Save failed", res);
       }
@@ -466,7 +513,7 @@ function drawHighscores() {
   ctx.textAlign = "center";
   ctx.fillText("Top Scores", canvas.width / 2, canvas.height / 2 + 100);
   ctx.font = `${canvas.width / 30}px Arial`;
-  highscores.forEach((row, index) => {
+  highscores.slice(0, 5).forEach((row, index) => {
     ctx.fillText(
       `${index + 1}. ${row.player}: ${row.score}`,
       canvas.width / 2,
@@ -481,27 +528,66 @@ const nameInputContainer = document.getElementById("nameInputContainer");
 const confirmSaveBtn = document.getElementById("confirmSaveBtn");
 const playerNameInput = document.getElementById("playerName");
 
+function savePlayerScore() {
+  const playerName = playerNameInput.value.trim();
+
+  if (!playerName) {
+    alert("Please enter your name!");
+    return;
+  }
+
+  if (playerName.length > 10) {
+    alert("Name must be max 10 characters!");
+    return;
+  }
+
+  submitScoreToServer(playerName, score);
+
+  // Hide score submission UI after saving this round
+  saveScoreContainer.style.display = "none";
+  nameInputContainer.style.display = "none";
+
+  playerNameInput.value = "";
+
+  // Fully reset game state and go back to idle screen after saving score
+  resetGame();
+  idleLoop();
+}
+
 if (saveScoreBtn) {
   saveScoreBtn.addEventListener("click", (e) => {
     e.stopPropagation();
     nameInputContainer.style.display = "block";
-    saveScoreBtn.style.display = "none"; // hide the save button once clicked
+    saveScoreBtn.style.display = "none";
     playerNameInput.focus();
   });
 }
 
 if (confirmSaveBtn) {
-  confirmSaveBtn.addEventListener("click", () => {
-    const playerName = playerNameInput.value.trim();
-    if (playerName) {
-      submitScoreToServer(playerName, score);
-      saveScoreContainer.style.display = "none";
-      nameInputContainer.style.display = "none";
-      saveScoreBtn.style.display = "inline-block"; // show save button again for next time
-      playerNameInput.value = "";
-    } else {
-      alert("Please enter your name!");
+  confirmSaveBtn.addEventListener("click", (e) => {
+    e.stopPropagation();
+    savePlayerScore();
+  });
+}
+
+if (playerNameInput) {
+  playerNameInput.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      savePlayerScore();
     }
+  });
+}
+
+// Voeg een event listener toe aan de playAgainBtn
+const playAgainBtn = document.getElementById("playAgainBtn");
+if (playAgainBtn) {
+  playAgainBtn.addEventListener("click", (e) => {
+    e.stopPropagation();
+    resetGame();
+    gameOver = false;
+    gameStarted = false;
+    idleLoop();
   });
 }
 
@@ -510,5 +596,6 @@ fishImg.onload = () => {
   resizeCanvas();
   drawBackground();
   drawMeander();
+  fetchHighscores();
   idleLoop();
 };

@@ -22,17 +22,29 @@ canvas {
     text-align: center;
 }
 
-#saveScoreBtn,
-#confirmSaveBtn {
+
+#saveScoreBtn {
     padding: 12px 24px;
     font-size: 18px;
     font-family: "Papyrus", "Times New Roman", serif;
-    background-color: #333;
+    background-color: #337295;
     color: white;
     border: none;
     border-radius: 8px;
     cursor: pointer;
-    margin-top: 10px;
+    margin-top: -20px;
+    margin-bottom: 10px;
+}
+
+#confirmSaveBtn {
+    padding: 10px 16px;
+    font-size: 16px;
+    font-family: "Papyrus", "Times New Roman", serif;
+    background-color: #337295;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
 }
 
 #saveScoreBtn:hover,
@@ -41,8 +53,12 @@ canvas {
 }
 
 #nameInputContainer {
-    display: none;
-    margin-top: 12px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: row;
+    gap: 8px;
+    margin-top: 0;
 }
 
 #playerName {
@@ -50,5 +66,27 @@ canvas {
     font-size: 18px;
     border: 2px solid #ccc;
     border-radius: 6px;
-    width: 200px;
+    width: 120px;
+}
+
+#playAgainBtn {
+    position: absolute;
+    top: 70%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    padding: 12px 24px;
+    font-size: 18px;
+    font-family: "Papyrus", "Times New Roman", serif;
+    background-color: #337295;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    display: block;
+    /* altijd tonen */
+    z-index: 12;
+}
+
+#playAgainBtn:hover {
+    background-color: #555;
 }
