@@ -160,11 +160,16 @@ function drawGameOver() {
       const saveBtnEl = document.getElementById("saveScoreBtn");
       const nameInputEl = document.getElementById("nameInputContainer");
       const playerNameEl = document.getElementById("playerName");
-      if (saveBtnEl) saveBtnEl.style.display = "inline-block"; // show the Save button again each game over
-      if (nameInputEl) nameInputEl.style.display = "none"; // hide input until Save is clicked
-      if (playerNameEl) playerNameEl.value = ""; // clear previous name
+      if (saveBtnEl) saveBtnEl.style.display = "inline-block";
+      if (nameInputEl) nameInputEl.style.display = "none";
+      if (playerNameEl) playerNameEl.value = "";
     } else {
-      saveScoreContainer.style.display = "none";
+      // niet de hele container verbergen, maar alleen de save-knop/input
+      const saveBtnEl = document.getElementById("saveScoreBtn");
+      const nameInputEl = document.getElementById("nameInputContainer");
+      if (saveBtnEl) saveBtnEl.style.display = "none";
+      if (nameInputEl) nameInputEl.style.display = "none";
+      saveScoreContainer.style.display = "block"; // container blijft zichtbaar voor Try again
     }
   }
 
