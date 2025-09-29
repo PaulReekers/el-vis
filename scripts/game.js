@@ -18,7 +18,7 @@ export const GRAVITY = 0.5;
 export const LIFT = -7;
 const hitboxMargin = 11;
 
-let DEBUG = true; // Show debug hitboxes if true
+let DEBUG = false; // Show debug hitboxes if true
 
 // === State variables ===
 export let fishX = 100;
