@@ -13,12 +13,12 @@ export const meanderOriginalWidth = 193;
 export const meanderOriginalHeight = 108;
 export const pipeWidth = 120;
 export const pipeGap = 200;
-export const PIPE_HITBOX_PADDING = 15;
+export const PIPE_HITBOX_PADDING = 25;
 export const GRAVITY = 0.5;
 export const LIFT = -7;
 const hitboxMargin = 11;
 
-let DEBUG = false; // Show debug hitboxes if true
+let DEBUG = true; // Show debug hitboxes if true
 
 // === State variables ===
 export let fishX = 100;
@@ -118,15 +118,29 @@ function drawDebugHitboxes() {
   ctx.lineWidth = 2;
   ctx.stroke();
 
-  pipes.forEach((pipe) => {
+  pipes.forEach((pipe, index) => {
     ctx.strokeStyle = "lime";
     ctx.lineWidth = 2;
-    ctx.strokeRect(
-      pipe.x + PIPE_HITBOX_PADDING,
-      pipe.y,
-      pipeWidth - PIPE_HITBOX_PADDING * 2,
-      pipe.height
-    );
+
+    if (index % 2 === 0) {
+      // top pipe
+      ctx.strokeRect(
+        pipe.x + PIPE_HITBOX_PADDING,
+        0,
+        pipeWidth - PIPE_HITBOX_PADDING * 2,
+        pipe.topPipeHeight
+      );
+
+      // bottom pipe
+      const bottomY = pipe.topPipeHeight + pipeGap;
+      const bottomHeight = canvas.height - bottomY;
+      ctx.strokeRect(
+        pipe.x + PIPE_HITBOX_PADDING,
+        bottomY,
+        pipeWidth - PIPE_HITBOX_PADDING * 2,
+        bottomHeight
+      );
+    }
   });
 }
 
@@ -361,17 +375,18 @@ export function checkCollision() {
     const topPipeHeight = topPipe.topPipeHeight;
     const bottomY = topPipeHeight + pipeGap;
 
-    const overlapsX =
-      fishX + fishWidth > topPipe.x && fishX < topPipe.x + pipeWidth;
+    const pipeHitboxLeft = topPipe.x + PIPE_HITBOX_PADDING;
+    const pipeHitboxRight = topPipe.x + pipeWidth - PIPE_HITBOX_PADDING;
+    const fishRight = fishX + fishWidth;
+    const fishLeft = fishX;
+
+    const overlapsX = fishRight > pipeHitboxLeft && fishLeft < pipeHitboxRight;
 
     if (overlapsX) {
-      // Botsing boven
-      if (fishY < topPipeHeight) {
-        stopGame();
-        return;
-      }
-      // Botsing onder
-      if (fishY + fishHeight > bottomY) {
+      const hitsTop = fishY <= topPipeHeight;
+      const hitsBottom = fishY + fishHeight >= bottomY;
+
+      if (hitsTop || hitsBottom) {
         stopGame();
         return;
       }
