@@ -1,17 +1,24 @@
 body {
     margin: 0;
     display: flex;
+    flex-direction: column;
     justify-content: center;
     align-items: center;
     height: 100vh;
     background: #07548e;
+    color: #c8c8c8;
+    font-family: Helvetica, sans-serif;
+    text-align: center;
 }
-
 canvas {
     position: relative;
-    border: 2px solid #07548e;
+    border-top: 2px solid #07548e;
     background: url("../images/background.png") no-repeat center;
     background-size: cover;
+}
+
+#intro {
+    padding: 20px;
 }
 
 /* Utility classes voor toggling */
@@ -95,6 +102,7 @@ canvas {
     cursor: pointer;
     z-index: 12;
     border: solid 2px white;
+    width: 140px;
 }
 
 #playAgainBtn:hover {
