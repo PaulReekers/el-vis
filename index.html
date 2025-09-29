@@ -18,27 +18,31 @@
 </head>
 
 <body>
-  <main>
-    <canvas id="gameCanvas" role="img" aria-label="El-vis game canvas"></canvas>
+  <main class="game">
+    <canvas class="game__canvas" id="gameCanvas" role="img" aria-label="El-vis game canvas"></canvas>
 
-    <section id="saveScoreContainer" class="hidden text-center" aria-live="polite">
-      <button id="saveScoreBtn">Save Score</button>
-      <div id="nameInputContainer">
+    <section class="score score--hidden" aria-live="polite" id="saveScoreContainer">
+        <button class="score__button btn" id="saveScoreBtn">Save Score</button>
+
+        <div class="score__name" id="nameInputContainer">
         <label for="playerName" class="visually-hidden">Enter your name</label>
-        <input type="text" id="playerName" placeholder="Your name">
-        <button id="confirmSaveBtn">Confirm</button>
-      </div>
-      <button id="playAgainBtn" class="hidden" aria-label="Play again">Try again</button>
-    </section>
-  </main>
+        <input type="text" class="score__input" id="playerName" placeholder="Your name">
+        <button class="score__button btn" id="confirmSaveBtn">Confirm</button>
+        </div>
 
-  <aside id="intro">
-    <h3>El-vis in Greece.</h3>
-    <p>
-      Click on the screen, or use your spacebar to get started.
-      Swim the fish as far as you can without hitting a pillar.
+        <button class="score__button btn score__button--hidden" id="playAgainBtn" aria-label="Play again">
+        Try again
+        </button>
+    </section>
+    </main>
+
+    <aside class="intro" id="intro">
+    <h3 class="intro__title">El-vis in Greece.</h3>
+    <p class="intro__text">
+        Click on the screen, or use your spacebar to get started.
+        Swim the fish as far as you can without hitting a pillar.
     </p>
-  </aside>
+    </aside>
 
   <script src="scripts/script.js"></script>
 </body>
