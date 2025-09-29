@@ -153,11 +153,9 @@ function drawGameOver() {
   const saveScoreContainer = document.getElementById("saveScoreContainer");
   if (saveScoreContainer) {
     if (score > 0) {
-      saveScoreContainer.style.display = "flex";
-      saveScoreContainer.style.position = "absolute";
-      saveScoreContainer.style.top = `${baseY}px`;
+      saveScoreContainer.style.display = "block";
+      saveScoreContainer.style.bottom = "10%";
       saveScoreContainer.style.left = "50%";
-      saveScoreContainer.style.transform = "translateX(-50%)";
 
       const saveBtnEl = document.getElementById("saveScoreBtn");
       const nameInputEl = document.getElementById("nameInputContainer");
