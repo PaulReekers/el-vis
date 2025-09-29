@@ -62,6 +62,10 @@ Built with **HTML, CSS, JavaScript**, and a **PHP/MySQL backend** for highscores
 - Enable debug mode: set `DEBUG = true;` in `game.js`.
 - Linting/formatting: use your preferred editor (VS Code recommended).
 
+## 📸 Screenshots
+
+![Screenshot of El-vis](docs/screenshot.png)
+
 ## 📜 License
 MIT License. Free to use, modify, and share.
 
