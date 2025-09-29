@@ -4,28 +4,43 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="icon" type="image/png" href="favicon/favicon-96x96.png" sizes="96x96" />
-    <link rel="icon" type="image/svg+xml" href="favicon/favicon.svg" />
-    <link rel="shortcut icon" href="favicon/favicon.ico" />
-    <link rel="apple-touch-icon" sizes="180x180" href="favicon/apple-touch-icon.png" />
-    <meta name="apple-mobile-web-app-title" content="El-vis" />
-    <link rel="manifest" href="favicon/site.webmanifest" />
+
     <title>El-vis</title>
+
+    <!-- Favicons -->
+    <link rel="icon" href="favicon/favicon.svg" type="image/svg+xml">
+    <link rel="apple-touch-icon" sizes="180x180" href="favicon/apple-touch-icon.png">
+    <link rel="shortcut icon" href="favicon/favicon.ico">
+    <link rel="manifest" href="favicon/site.webmanifest">
+
+    <!-- Styles -->
     <link rel="stylesheet" href="styles/style.css">
 </head>
 
 <body>
-    <canvas id="gameCanvas"></canvas>
-    <div id="saveScoreContainer" style="display:none; text-align:center;">
-        <button id="saveScoreBtn">Save Score</button>
-        <div id="nameInputContainer">
-            <input type="text" id="playerName" placeholder="Your name">
-            <button id="confirmSaveBtn">Confirm</button>
-        </div>
-        <button id="playAgainBtn" style="display:none;">Try again</button>
-    </div>
-    <div id="intro"><h3>El-vis in Greece.</h3> Click on the screen, or use your spacebar to get started. Swim the fish as far as you can without hitting a pilar.</div>
-    <script src="scripts/script.js"></script>
+  <main>
+    <canvas id="gameCanvas" role="img" aria-label="El-vis game canvas"></canvas>
+
+    <section id="saveScoreContainer" class="hidden text-center" aria-live="polite">
+      <button id="saveScoreBtn">Save Score</button>
+      <div id="nameInputContainer">
+        <label for="playerName" class="visually-hidden">Enter your name</label>
+        <input type="text" id="playerName" placeholder="Your name">
+        <button id="confirmSaveBtn">Confirm</button>
+      </div>
+      <button id="playAgainBtn" class="hidden" aria-label="Play again">Try again</button>
+    </section>
+  </main>
+
+  <aside id="intro">
+    <h3>El-vis in Greece.</h3>
+    <p>
+      Click on the screen, or use your spacebar to get started.
+      Swim the fish as far as you can without hitting a pillar.
+    </p>
+  </aside>
+
+  <script src="scripts/script.js"></script>
 </body>
 
 </html>

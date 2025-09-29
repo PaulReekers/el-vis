@@ -23,11 +23,24 @@ canvas {
 
 /* Utility classes voor toggling */
 .hidden {
-    display: none !important;
+    display: none;
 }
 
+.text-center {
+    text-align: center;
+}
 .visible {
     display: flex !important;
+}
+.visually-hidden {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    border: 0;
 }
 
 #saveScoreContainer {
@@ -35,7 +48,6 @@ canvas {
     top: 60%;
     left: 50%;
     transform: translate(-50%, -50%);
-    text-align: center;
 }
 
 #saveScoreBtn {
