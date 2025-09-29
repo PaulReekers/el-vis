@@ -407,6 +407,8 @@ export function resetGame() {
   drawBackground();
   drawMeander();
   drawFish();
+
+  fetchHighscores();
 }
 
 export function gameLoop() {
