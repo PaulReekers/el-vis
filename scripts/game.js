@@ -125,7 +125,7 @@ function drawDebugHitboxes() {
       pipe.x + PIPE_HITBOX_PADDING,
       pipe.y,
       pipeWidth - PIPE_HITBOX_PADDING * 2,
-      canvas.height
+      pipe.height
     );
   });
 }
@@ -199,8 +199,25 @@ export function drawFish(customY = fishY) {
 }
 
 export function drawPipes() {
-  pipes.forEach((pipe) => {
-    ctx.drawImage(pipeImg, pipe.x, pipe.y, pipeWidth, canvas.height);
+  pipes.forEach((pipe, index) => {
+    if (index % 2 === 0) {
+      // top pipe
+      const topPipeHeight = pipe.topPipeHeight;
+      ctx.drawImage(pipeImg, pipe.x, 0, pipeWidth, topPipeHeight);
+      // bottom pipe (the next pipe in array)
+      const bottomPipe = pipes[index + 1];
+      if (bottomPipe) {
+        const bottomPipeY = topPipeHeight + pipeGap;
+        const bottomPipeHeight = canvas.height - bottomPipeY;
+        ctx.drawImage(
+          pipeImg,
+          bottomPipe.x,
+          bottomPipeY,
+          pipeWidth,
+          bottomPipeHeight
+        );
+      }
+    }
   });
 }
 
@@ -285,10 +302,18 @@ export function updatePipes() {
     let topPipeHeight = Math.random() * (canvas.height - pipeGap - 50) + 20;
     pipes.push({
       x: canvas.width,
-      y: topPipeHeight - canvas.height,
+      y: 0,
+      height: topPipeHeight,
+      topPipeHeight: topPipeHeight,
       scored: false,
     });
-    pipes.push({ x: canvas.width, y: topPipeHeight + pipeGap, scored: false });
+    pipes.push({
+      x: canvas.width,
+      y: topPipeHeight + pipeGap,
+      height: canvas.height - (topPipeHeight + pipeGap),
+      topPipeHeight: topPipeHeight,
+      scored: false,
+    });
 
     pipesSpawned++;
     if (pipesSpawned % 5 === 0) {
@@ -318,34 +343,38 @@ export function checkCollision() {
   const fishWidth = fishOriginalWidth * FISH_SCALE;
   const fishHeight = fishOriginalHeight * FISH_SCALE;
 
+  // Onderaan canvas
   if (fishY + fishHeight > canvas.height) {
     stopGame();
+    return;
   }
 
+  // Meander
   if (fishY + fishHeight > canvas.height - meanderHeight) {
     stopGame();
+    return;
   }
 
-  for (let i = 0; i < pipes.length; i++) {
-    let pipe = pipes[i];
-    const fishCenterX = fishX + fishWidth / 2;
-    const fishCenterY = fishY + fishHeight / 2;
-    const fishRadius = Math.min(fishWidth, fishHeight) / 2.5;
+  // Pijpen
+  for (let i = 0; i < pipes.length; i += 2) {
+    const topPipe = pipes[i];
+    const topPipeHeight = topPipe.topPipeHeight;
+    const bottomY = topPipeHeight + pipeGap;
 
-    const closestX = Math.max(
-      pipe.x + PIPE_HITBOX_PADDING,
-      Math.min(fishCenterX, pipe.x + pipeWidth - PIPE_HITBOX_PADDING)
-    );
-    const closestY = Math.max(
-      pipe.y,
-      Math.min(fishCenterY, pipe.y + canvas.height)
-    );
+    const overlapsX =
+      fishX + fishWidth > topPipe.x && fishX < topPipe.x + pipeWidth;
 
-    const dx = fishCenterX - closestX;
-    const dy = fishCenterY - closestY;
-
-    if (dx * dx + dy * dy < fishRadius * fishRadius) {
-      stopGame();
+    if (overlapsX) {
+      // Botsing boven
+      if (fishY < topPipeHeight) {
+        stopGame();
+        return;
+      }
+      // Botsing onder
+      if (fishY + fishHeight > bottomY) {
+        stopGame();
+        return;
+      }
     }
   }
 }
