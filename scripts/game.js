@@ -1,30 +1,33 @@
 // === Constants ===
 // -- Canvas & Drawing Context --
-const canvas = document.getElementById("gameCanvas");
-const ctx = canvas.getContext("2d");
+export const canvas = document.getElementById("gameCanvas");
+export const ctx = canvas.getContext("2d");
 ctx.imageSmoothingEnabled = false;
 
 // -- Game Physics & Dimensions --
-const PIPE_DISTANCE = 400;
-const fishOriginalWidth = 158;
-const fishOriginalHeight = 56;
-const FISH_SCALE = 0.6;
-const meanderOriginalWidth = 193;
-const meanderOriginalHeight = 108;
-const pipeWidth = 120;
-const pipeGap = 200;
-const PIPE_HITBOX_PADDING = 15;
-const GRAVITY = 0.5;
-const LIFT = -7;
+export const PIPE_DISTANCE = 400;
+export const fishOriginalWidth = 158;
+export const fishOriginalHeight = 56;
+export const FISH_SCALE = 0.6;
+export const meanderOriginalWidth = 193;
+export const meanderOriginalHeight = 108;
+export const pipeWidth = 120;
+export const pipeGap = 200;
+export const PIPE_HITBOX_PADDING = 15;
+export const GRAVITY = 0.5;
+export const LIFT = -7;
 const hitboxMargin = 11;
 
 let DEBUG = false; // Show debug hitboxes if true
 
 // === State variables ===
-let fishX = 100;
-let fishY = 0;
-let velocity = 0;
-let isFlapping = false;
+export let fishX = 100;
+export let fishY = 0;
+export let velocity = 0;
+export let isFlapping = false;
+export function setIsFlapping(value) {
+  isFlapping = value;
+}
 let idleOffset = 0;
 let idleDirection = 1;
 let meanderHeight = 0;
@@ -33,33 +36,33 @@ let pipes = [];
 let pipeSpeed = 4;
 let pipesSpawned = 0;
 let gameStartTime = null;
-let score = 0;
-let highscoresVisible = true;
+export let score = 0;
+export let highscoresVisible = true;
 
 // === Highscore & Game State ===
-let highScore = 0;
-let highScoreDate = null;
+export let highScore = 0;
+export let highScoreDate = null;
 const savedHighScore = localStorage.getItem("highScore");
 const savedHighScoreDate = localStorage.getItem("highScoreDate");
 if (savedHighScore) {
   highScore = parseInt(savedHighScore, 10);
   highScoreDate = savedHighScoreDate;
 }
-let gameStarted = false;
-let gameOver = false;
+export let gameStarted = false;
+export let gameOver = false;
 let animId = null;
 let restartCooldown = false;
 
 // === DOM references ===
-const saveScoreContainer = document.getElementById("saveScoreContainer");
-const saveScoreBtn = document.getElementById("saveScoreBtn");
-const nameInputContainer = document.getElementById("nameInputContainer");
-const confirmSaveBtn = document.getElementById("confirmSaveBtn");
-const playerNameInput = document.getElementById("playerName");
-const playAgainBtn = document.getElementById("playAgainBtn");
+export const saveScoreContainer = document.getElementById("saveScoreContainer");
+export const saveScoreBtn = document.getElementById("saveScoreBtn");
+export const nameInputContainer = document.getElementById("nameInputContainer");
+export const confirmSaveBtn = document.getElementById("confirmSaveBtn");
+export const playerNameInput = document.getElementById("playerName");
+export const playAgainBtn = document.getElementById("playAgainBtn");
 
 // === Images ===
-const fishImg = new Image();
+export const fishImg = new Image();
 fishImg.src = "images/el-vis.png";
 const pipeImg = new Image();
 pipeImg.src = "images/pipe.png";
@@ -69,7 +72,7 @@ const meanderImg = new Image();
 meanderImg.src = "images/meander.png";
 
 // === Utility & Helper functions ===
-function resizeCanvas() {
+export function resizeCanvas() {
   const maxWidth = window.visualViewport
     ? window.visualViewport.width
     : window.innerWidth;
@@ -93,7 +96,7 @@ function resizeCanvas() {
     meanderOriginalHeight * 0.2 * (canvas.width / meanderOriginalWidth);
 }
 
-function isUITarget(el) {
+export function isUITarget(el) {
   if (!el || !el.closest) return false;
   return (
     el.closest("#saveScoreContainer") ||
@@ -128,7 +131,7 @@ function drawDebugHitboxes() {
 }
 
 // === UI Handling functions ===
-function showSaveUI() {
+export function showSaveUI() {
   if (saveScoreContainer) {
     saveScoreContainer.style.display = "block";
     saveScoreContainer.style.bottom = "10%";
@@ -139,28 +142,27 @@ function showSaveUI() {
   if (playerNameInput) playerNameInput.value = "";
 }
 
-function hideSaveUI() {
+export function hideSaveUI() {
   if (saveScoreContainer) saveScoreContainer.style.display = "none";
   if (nameInputContainer) nameInputContainer.style.display = "none";
 }
 
-function showPlayAgainBtn() {
+export function showPlayAgainBtn() {
   if (playAgainBtn) playAgainBtn.style.display = "block";
 }
 
-function hidePlayAgainBtn() {
+export function hidePlayAgainBtn() {
   if (playAgainBtn) playAgainBtn.style.display = "none";
 }
 
-// === Restart button UI handling ===
-function showRestartBtn() {
+export function showRestartBtn() {
   const restartBtn = document.getElementById("restartBtn");
   if (restartBtn) {
     restartBtn.style.display = "block";
   }
 }
 
-function hideRestartBtn() {
+export function hideRestartBtn() {
   const restartBtn = document.getElementById("restartBtn");
   if (restartBtn) {
     restartBtn.style.display = "none";
@@ -168,11 +170,11 @@ function hideRestartBtn() {
 }
 
 // === Drawing functions ===
-function drawBackground() {
+export function drawBackground() {
   ctx.drawImage(bgImg, 0, 0, canvas.width, canvas.height);
 }
 
-function drawFish(customY = fishY) {
+export function drawFish(customY = fishY) {
   ctx.save();
   const fishWidth = fishOriginalWidth * FISH_SCALE;
   const fishHeight = fishOriginalHeight * FISH_SCALE;
@@ -196,13 +198,13 @@ function drawFish(customY = fishY) {
   ctx.restore();
 }
 
-function drawPipes() {
+export function drawPipes() {
   pipes.forEach((pipe) => {
     ctx.drawImage(pipeImg, pipe.x, pipe.y, pipeWidth, canvas.height);
   });
 }
 
-function drawMeander() {
+export function drawMeander() {
   const meanderWidth =
     meanderOriginalWidth * (meanderHeight / meanderOriginalHeight);
   for (let x = meanderX; x < canvas.width + meanderWidth; x += meanderWidth) {
@@ -216,14 +218,14 @@ function drawMeander() {
   }
 }
 
-function drawScore() {
+export function drawScore() {
   ctx.fillStyle = "white";
   ctx.font = `${canvas.width / 10}px "Papyrus", "Times New Roman", serif`;
   ctx.textAlign = "center";
   ctx.fillText(score, canvas.width / 2, canvas.height * 0.2);
 }
 
-function drawHighscores() {
+export function drawHighscores() {
   if (!highscores || highscores.length === 0) return;
   ctx.font = `${canvas.width / 20}px Arial`;
   ctx.fillStyle = "yellow";
@@ -239,7 +241,7 @@ function drawHighscores() {
   });
 }
 
-function drawGameOver() {
+export function drawGameOver() {
   drawBackground();
   drawPipes();
   drawMeander();
@@ -254,12 +256,9 @@ function drawGameOver() {
 
   showRestartBtn();
 
-  const baseY = canvas.height / 2 + 140 + 10 * 30 + 40; // below the 10 scores
-
   if (score > 0) {
     showSaveUI();
   } else {
-    // niet de hele container verbergen, maar alleen de save-knop/input
     if (saveScoreBtn) saveScoreBtn.style.display = "none";
     if (nameInputContainer) nameInputContainer.style.display = "none";
     if (saveScoreContainer) saveScoreContainer.style.display = "block";
@@ -267,10 +266,8 @@ function drawGameOver() {
   showPlayAgainBtn();
 }
 
-// === Utility functions ===
-
-// Update functions
-function updatePipes() {
+// === Update & Collision ===
+export function updatePipes() {
   const meanderWidth =
     meanderOriginalWidth * (meanderHeight / meanderOriginalHeight);
   meanderX -= pipeSpeed;
@@ -317,8 +314,7 @@ function updatePipes() {
   }
 }
 
-// Collision detection
-function checkCollision() {
+export function checkCollision() {
   const fishWidth = fishOriginalWidth * FISH_SCALE;
   const fishHeight = fishOriginalHeight * FISH_SCALE;
 
@@ -332,8 +328,6 @@ function checkCollision() {
 
   for (let i = 0; i < pipes.length; i++) {
     let pipe = pipes[i];
-    const fishWidth = fishOriginalWidth * FISH_SCALE;
-    const fishHeight = fishOriginalHeight * FISH_SCALE;
     const fishCenterX = fishX + fishWidth / 2;
     const fishCenterY = fishY + fishHeight / 2;
     const fishRadius = Math.min(fishWidth, fishHeight) / 2.5;
@@ -357,9 +351,7 @@ function checkCollision() {
 }
 
 // === Game state & loops ===
-
-// Helper: initialize game state to starting values
-function initGameState() {
+export function initGameState() {
   fishY = canvas.height / 2 - 24;
   velocity = 0;
   pipes = [];
@@ -371,8 +363,7 @@ function initGameState() {
   highscoresVisible = true;
 }
 
-// Helper: update highscore if needed
-function updateHighscoreIfNeeded() {
+export function updateHighscoreIfNeeded() {
   if (score > highScore) {
     highScore = score;
     highScoreDate = new Date().toLocaleString();
@@ -381,17 +372,16 @@ function updateHighscoreIfNeeded() {
   }
 }
 
-function startGame() {
+export function startGame() {
   if (gameStarted) return;
   gameStarted = true;
-  const playAgainBtn = document.getElementById("playAgainBtn");
   if (playAgainBtn) playAgainBtn.style.display = "none";
   gameStartTime = Date.now();
   animId = requestAnimationFrame(gameLoop);
   highscoresVisible = false;
 }
 
-function stopGame() {
+export function stopGame() {
   if (animId) cancelAnimationFrame(animId);
   animId = null;
   gameStarted = false;
@@ -399,7 +389,6 @@ function stopGame() {
   gameOver = true;
 
   updateHighscoreIfNeeded();
-
   drawGameOver();
   restartCooldown = true;
   setTimeout(() => {
@@ -407,7 +396,7 @@ function stopGame() {
   }, 1000);
 }
 
-function resetGame() {
+export function resetGame() {
   fetchHighscores();
   initGameState();
 
@@ -420,7 +409,7 @@ function resetGame() {
   drawFish();
 }
 
-function gameLoop() {
+export function gameLoop() {
   drawBackground();
 
   if (gameOver) {
@@ -451,7 +440,7 @@ function gameLoop() {
   }
 }
 
-function idleLoop() {
+export function idleLoop() {
   drawBackground();
   drawMeander();
 
@@ -478,171 +467,27 @@ function idleLoop() {
   }
 }
 
-// === Input Handlers ===
-function handleKeyDown(e) {
-  if (gameOver) return;
-  if (e.code === "Space" || e.key === " " || e.key === "Spacebar") {
-    e.preventDefault();
-    if (gameOver && !restartCooldown) {
-      resetGame();
-      gameOver = false;
-      gameStarted = false;
-      idleLoop();
-      return;
-    }
-    startGame();
-    isFlapping = true;
+// === Server integration ===
+export async function submitScoreToServer(playerName, scoreValue) {
+  try {
+    const response = await fetch("submit_score.php", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ player: playerName, score: scoreValue }),
+    });
+    return await response.json();
+  } catch (err) {
+    console.error("Network error", err);
   }
 }
 
-function handleKeyUp(e) {
-  if (e.code === "Space" || e.key === " " || e.key === "Spacebar") {
-    e.preventDefault();
-    isFlapping = false;
+export let highscores = [];
+
+export async function fetchHighscores(limit = 10) {
+  try {
+    const response = await fetch(`get_highscores.php?limit=${limit}`);
+    highscores = await response.json();
+  } catch (e) {
+    console.error("Cannot fetch highscores", e);
   }
 }
-
-function handleTouchStart(e) {
-  const t = e.target;
-  if (isUITarget(t)) return;
-  if (gameOver) return;
-  e.preventDefault();
-  startGame();
-  isFlapping = true;
-}
-
-function handleTouchEnd(e) {
-  const t = e.target;
-  if (isUITarget(t)) return;
-  e.preventDefault();
-  isFlapping = false;
-}
-
-function handleTouchMove(e) {
-  const t = e.target;
-  if (isUITarget(t)) return;
-  e.preventDefault();
-}
-
-// === Event listeners (window/document) ===
-window.addEventListener("resize", resizeCanvas);
-window.addEventListener("orientationchange", () => {
-  setTimeout(resizeCanvas, 200);
-});
-
-// Keyboard controls
-document.addEventListener("keydown", handleKeyDown);
-document.addEventListener("keyup", handleKeyUp);
-
-// Touch controls
-document.addEventListener("touchstart", handleTouchStart, { passive: false });
-document.addEventListener("touchend", handleTouchEnd, { passive: false });
-document.addEventListener("touchmove", handleTouchMove, { passive: false });
-
-// --- Server integration for highscores ---
-function submitScoreToServer(playerName, scoreValue) {
-  fetch("submit_score.php", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ player: playerName, score: scoreValue }),
-  })
-    .then((r) => r.json())
-    .then((res) => {
-      if (res.success) {
-        fetchHighscores();
-        drawGameOver(); // redraw to include the updated high score list
-      } else {
-        console.warn("Save failed", res);
-      }
-    })
-    .catch((err) => console.error("Network error", err));
-}
-
-let highscores = [];
-
-function fetchHighscores(limit = 10) {
-  fetch(`get_highscores.php?limit=${limit}`)
-    .then((r) => r.json())
-    .then((data) => {
-      highscores = data;
-    })
-    .catch((e) => console.error("Cannot fetch highscores", e));
-}
-
-// === UI Button Handlers ===
-function handleSaveScoreClick(e) {
-  e.stopPropagation();
-  if (nameInputContainer) nameInputContainer.style.display = "block";
-  if (saveScoreBtn) saveScoreBtn.style.display = "none";
-  if (playerNameInput) playerNameInput.focus();
-}
-
-function handleConfirmSaveClick(e) {
-  e.stopPropagation();
-  savePlayerScore();
-}
-
-function handlePlayerNameKeydown(e) {
-  if (e.key === "Enter") {
-    e.preventDefault();
-    savePlayerScore();
-  }
-}
-
-function handlePlayAgainClick(e) {
-  e.stopPropagation();
-  resetGame();
-  gameOver = false;
-  gameStarted = false;
-  idleLoop();
-}
-
-// === UI DOM refs & event listeners ===
-if (saveScoreBtn) {
-  saveScoreBtn.addEventListener("click", handleSaveScoreClick);
-}
-
-if (confirmSaveBtn) {
-  confirmSaveBtn.addEventListener("click", handleConfirmSaveClick);
-}
-
-if (playerNameInput) {
-  playerNameInput.addEventListener("keydown", handlePlayerNameKeydown);
-}
-
-if (playAgainBtn) {
-  playAgainBtn.addEventListener("click", handlePlayAgainClick);
-}
-
-function savePlayerScore() {
-  const playerName = playerNameInput.value.trim();
-
-  if (!playerName) {
-    alert("Please enter your name!");
-    return;
-  }
-
-  if (playerName.length > 10) {
-    alert("Name can have max 10 characters!");
-    return;
-  }
-
-  submitScoreToServer(playerName, score);
-
-  // Hide score submission UI after saving this round
-  hideSaveUI();
-  if (playerNameInput) playerNameInput.value = "";
-
-  // Fully reset game state and go back to idle screen after saving score
-  resetGame();
-  idleLoop();
-}
-
-// Initialize on fish image load
-fishImg.onload = () => {
-  resizeCanvas();
-  drawBackground();
-  drawMeander();
-  fetchHighscores();
-  idleLoop();
-};
