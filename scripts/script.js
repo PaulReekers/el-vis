@@ -1,8 +1,10 @@
 // === Constants ===
+// -- Canvas & Drawing Context --
 const canvas = document.getElementById("gameCanvas");
 const ctx = canvas.getContext("2d");
 ctx.imageSmoothingEnabled = false;
 
+// -- Game Physics & Dimensions --
 const PIPE_DISTANCE = 400;
 const fishOriginalWidth = 158;
 const fishOriginalHeight = 56;
@@ -48,7 +50,15 @@ let gameOver = false;
 let animId = null;
 let restartCooldown = false;
 
-// === DOM references & Images ===
+// === DOM references ===
+const saveScoreContainer = document.getElementById("saveScoreContainer");
+const saveScoreBtn = document.getElementById("saveScoreBtn");
+const nameInputContainer = document.getElementById("nameInputContainer");
+const confirmSaveBtn = document.getElementById("confirmSaveBtn");
+const playerNameInput = document.getElementById("playerName");
+const playAgainBtn = document.getElementById("playAgainBtn");
+
+// === Images ===
 const fishImg = new Image();
 fishImg.src = "images/el-vis.png";
 const pipeImg = new Image();
@@ -57,6 +67,105 @@ const bgImg = new Image();
 bgImg.src = "images/background.png";
 const meanderImg = new Image();
 meanderImg.src = "images/meander.png";
+
+// === Utility & Helper functions ===
+function resizeCanvas() {
+  const maxWidth = window.visualViewport
+    ? window.visualViewport.width
+    : window.innerWidth;
+  const maxHeight = window.visualViewport
+    ? window.visualViewport.height
+    : window.innerHeight;
+  const aspectRatio = 768 / 1024;
+
+  let newWidth = maxWidth;
+  let newHeight = newWidth / aspectRatio;
+
+  if (newHeight > maxHeight) {
+    newHeight = maxHeight;
+    newWidth = newHeight * aspectRatio;
+  }
+
+  canvas.width = newWidth;
+  canvas.height = newHeight;
+  fishY = canvas.height / 2 - 24;
+  meanderHeight =
+    meanderOriginalHeight * 0.2 * (canvas.width / meanderOriginalWidth);
+}
+
+function isUITarget(el) {
+  if (!el || !el.closest) return false;
+  return (
+    el.closest("#saveScoreContainer") ||
+    el.closest("#playAgainBtn") ||
+    el.closest("#restartBtn")
+  );
+}
+
+function drawDebugHitboxes() {
+  const fishWidth = fishOriginalWidth * FISH_SCALE;
+  const fishHeight = fishOriginalHeight * FISH_SCALE;
+  const fishCenterX = fishX + fishWidth / 2;
+  const fishCenterY = fishY + fishHeight / 2;
+  const fishRadius = Math.min(fishWidth, fishHeight) / 2.5;
+
+  ctx.beginPath();
+  ctx.arc(fishCenterX, fishCenterY, fishRadius, 0, 2 * Math.PI);
+  ctx.strokeStyle = "red";
+  ctx.lineWidth = 2;
+  ctx.stroke();
+
+  pipes.forEach((pipe) => {
+    ctx.strokeStyle = "lime";
+    ctx.lineWidth = 2;
+    ctx.strokeRect(
+      pipe.x + PIPE_HITBOX_PADDING,
+      pipe.y,
+      pipeWidth - PIPE_HITBOX_PADDING * 2,
+      canvas.height
+    );
+  });
+}
+
+// === UI Handling functions ===
+function showSaveUI() {
+  if (saveScoreContainer) {
+    saveScoreContainer.style.display = "block";
+    saveScoreContainer.style.bottom = "10%";
+    saveScoreContainer.style.left = "50%";
+  }
+  if (saveScoreBtn) saveScoreBtn.style.display = "inline-block";
+  if (nameInputContainer) nameInputContainer.style.display = "none";
+  if (playerNameInput) playerNameInput.value = "";
+}
+
+function hideSaveUI() {
+  if (saveScoreContainer) saveScoreContainer.style.display = "none";
+  if (nameInputContainer) nameInputContainer.style.display = "none";
+}
+
+function showPlayAgainBtn() {
+  if (playAgainBtn) playAgainBtn.style.display = "block";
+}
+
+function hidePlayAgainBtn() {
+  if (playAgainBtn) playAgainBtn.style.display = "none";
+}
+
+// === Restart button UI handling ===
+function showRestartBtn() {
+  const restartBtn = document.getElementById("restartBtn");
+  if (restartBtn) {
+    restartBtn.style.display = "block";
+  }
+}
+
+function hideRestartBtn() {
+  const restartBtn = document.getElementById("restartBtn");
+  if (restartBtn) {
+    restartBtn.style.display = "none";
+  }
+}
 
 // === Drawing functions ===
 function drawBackground() {
@@ -143,100 +252,22 @@ function drawGameOver() {
   ctx.textAlign = "center";
   ctx.fillText("Score: " + score, canvas.width / 2, canvas.height / 2 - 80);
 
-  const restartBtn = document.getElementById("restartBtn");
-  if (restartBtn) {
-    restartBtn.style.display = "block";
-  }
+  showRestartBtn();
 
   const baseY = canvas.height / 2 + 140 + 10 * 30 + 40; // below the 10 scores
 
-  const saveScoreContainer = document.getElementById("saveScoreContainer");
-  if (saveScoreContainer) {
-    if (score > 0) {
-      saveScoreContainer.style.display = "block";
-      saveScoreContainer.style.bottom = "10%";
-      saveScoreContainer.style.left = "50%";
-
-      const saveBtnEl = document.getElementById("saveScoreBtn");
-      const nameInputEl = document.getElementById("nameInputContainer");
-      const playerNameEl = document.getElementById("playerName");
-      if (saveBtnEl) saveBtnEl.style.display = "inline-block";
-      if (nameInputEl) nameInputEl.style.display = "none";
-      if (playerNameEl) playerNameEl.value = "";
-    } else {
-      // niet de hele container verbergen, maar alleen de save-knop/input
-      const saveBtnEl = document.getElementById("saveScoreBtn");
-      const nameInputEl = document.getElementById("nameInputContainer");
-      if (saveBtnEl) saveBtnEl.style.display = "none";
-      if (nameInputEl) nameInputEl.style.display = "none";
-      saveScoreContainer.style.display = "block"; // container blijft zichtbaar voor Try again
-    }
+  if (score > 0) {
+    showSaveUI();
+  } else {
+    // niet de hele container verbergen, maar alleen de save-knop/input
+    if (saveScoreBtn) saveScoreBtn.style.display = "none";
+    if (nameInputContainer) nameInputContainer.style.display = "none";
+    if (saveScoreContainer) saveScoreContainer.style.display = "block";
   }
-
-  const playAgainBtn = document.getElementById("playAgainBtn");
-  if (playAgainBtn) {
-    playAgainBtn.style.display = "block";
-  }
+  showPlayAgainBtn();
 }
 
 // === Utility functions ===
-function resizeCanvas() {
-  const maxWidth = window.visualViewport
-    ? window.visualViewport.width
-    : window.innerWidth;
-  const maxHeight = window.visualViewport
-    ? window.visualViewport.height
-    : window.innerHeight;
-  const aspectRatio = 768 / 1024;
-
-  let newWidth = maxWidth;
-  let newHeight = newWidth / aspectRatio;
-
-  if (newHeight > maxHeight) {
-    newHeight = maxHeight;
-    newWidth = newHeight * aspectRatio;
-  }
-
-  canvas.width = newWidth;
-  canvas.height = newHeight;
-  fishY = canvas.height / 2 - 24;
-  meanderHeight =
-    meanderOriginalHeight * 0.2 * (canvas.width / meanderOriginalWidth);
-}
-
-function isUITarget(el) {
-  if (!el || !el.closest) return false;
-  return (
-    el.closest("#saveScoreContainer") ||
-    el.closest("#playAgainBtn") ||
-    el.closest("#restartBtn")
-  );
-}
-
-function drawDebugHitboxes() {
-  const fishWidth = fishOriginalWidth * FISH_SCALE;
-  const fishHeight = fishOriginalHeight * FISH_SCALE;
-  const fishCenterX = fishX + fishWidth / 2;
-  const fishCenterY = fishY + fishHeight / 2;
-  const fishRadius = Math.min(fishWidth, fishHeight) / 2.5;
-
-  ctx.beginPath();
-  ctx.arc(fishCenterX, fishCenterY, fishRadius, 0, 2 * Math.PI);
-  ctx.strokeStyle = "red";
-  ctx.lineWidth = 2;
-  ctx.stroke();
-
-  pipes.forEach((pipe) => {
-    ctx.strokeStyle = "lime";
-    ctx.lineWidth = 2;
-    ctx.strokeRect(
-      pipe.x + PIPE_HITBOX_PADDING,
-      pipe.y,
-      pipeWidth - PIPE_HITBOX_PADDING * 2,
-      canvas.height
-    );
-  });
-}
 
 // Update functions
 function updatePipes() {
@@ -326,6 +357,30 @@ function checkCollision() {
 }
 
 // === Game state & loops ===
+
+// Helper: initialize game state to starting values
+function initGameState() {
+  fishY = canvas.height / 2 - 24;
+  velocity = 0;
+  pipes = [];
+  score = 0;
+  pipesSpawned = 0;
+  pipeSpeed = 4;
+  gameStartTime = Date.now();
+  gameOver = false;
+  highscoresVisible = true;
+}
+
+// Helper: update highscore if needed
+function updateHighscoreIfNeeded() {
+  if (score > highScore) {
+    highScore = score;
+    highScoreDate = new Date().toLocaleString();
+    localStorage.setItem("highScore", highScore);
+    localStorage.setItem("highScoreDate", highScoreDate);
+  }
+}
+
 function startGame() {
   if (gameStarted) return;
   gameStarted = true;
@@ -343,12 +398,7 @@ function stopGame() {
   isFlapping = false;
   gameOver = true;
 
-  if (score > highScore) {
-    highScore = score;
-    highScoreDate = new Date().toLocaleString();
-    localStorage.setItem("highScore", highScore);
-    localStorage.setItem("highScoreDate", highScoreDate);
-  }
+  updateHighscoreIfNeeded();
 
   drawGameOver();
   restartCooldown = true;
@@ -359,32 +409,11 @@ function stopGame() {
 
 function resetGame() {
   fetchHighscores();
+  initGameState();
 
-  fishY = canvas.height / 2 - 24;
-  velocity = 0;
-  pipes = [];
-  score = 0;
-  pipesSpawned = 0;
-  pipeSpeed = 4;
-  gameStartTime = Date.now();
-  gameOver = false;
-  highscoresVisible = true;
-
-  const restartBtn = document.getElementById("restartBtn");
-  if (restartBtn) {
-    restartBtn.style.display = "none";
-  }
-
-  const saveScoreContainer = document.getElementById("saveScoreContainer");
-  const nameInputContainer = document.getElementById("nameInputContainer");
-  if (saveScoreContainer) saveScoreContainer.style.display = "none";
-  if (nameInputContainer) nameInputContainer.style.display = "none";
-
-  // const saveScoreBtn = document.getElementById("saveScoreBtn");
-  // if (saveScoreBtn) saveScoreBtn.style.display = "inline-block";
-
-  const playAgainBtn = document.getElementById("playAgainBtn");
-  if (playAgainBtn) playAgainBtn.style.display = "none";
+  hideRestartBtn();
+  hideSaveUI();
+  hidePlayAgainBtn();
 
   drawBackground();
   drawMeander();
@@ -449,14 +478,8 @@ function idleLoop() {
   }
 }
 
-// === Event listeners (window/document) ===
-window.addEventListener("resize", resizeCanvas);
-window.addEventListener("orientationchange", () => {
-  setTimeout(resizeCanvas, 200);
-});
-
-// Keyboard controls
-document.addEventListener("keydown", (e) => {
+// === Input Handlers ===
+function handleKeyDown(e) {
   if (gameOver) return;
   if (e.code === "Space" || e.key === " " || e.key === "Spacebar") {
     e.preventDefault();
@@ -470,49 +493,51 @@ document.addEventListener("keydown", (e) => {
     startGame();
     isFlapping = true;
   }
-});
+}
 
-document.addEventListener("keyup", (e) => {
+function handleKeyUp(e) {
   if (e.code === "Space" || e.key === " " || e.key === "Spacebar") {
     e.preventDefault();
     isFlapping = false;
   }
+}
+
+function handleTouchStart(e) {
+  const t = e.target;
+  if (isUITarget(t)) return;
+  if (gameOver) return;
+  e.preventDefault();
+  startGame();
+  isFlapping = true;
+}
+
+function handleTouchEnd(e) {
+  const t = e.target;
+  if (isUITarget(t)) return;
+  e.preventDefault();
+  isFlapping = false;
+}
+
+function handleTouchMove(e) {
+  const t = e.target;
+  if (isUITarget(t)) return;
+  e.preventDefault();
+}
+
+// === Event listeners (window/document) ===
+window.addEventListener("resize", resizeCanvas);
+window.addEventListener("orientationchange", () => {
+  setTimeout(resizeCanvas, 200);
 });
 
+// Keyboard controls
+document.addEventListener("keydown", handleKeyDown);
+document.addEventListener("keyup", handleKeyUp);
+
 // Touch controls
-document.addEventListener(
-  "touchstart",
-  (e) => {
-    const t = e.target;
-    if (isUITarget(t)) return;
-    if (gameOver) return;
-    e.preventDefault();
-    startGame();
-    isFlapping = true;
-  },
-  { passive: false }
-);
-
-document.addEventListener(
-  "touchend",
-  (e) => {
-    const t = e.target;
-    if (isUITarget(t)) return;
-    e.preventDefault();
-    isFlapping = false;
-  },
-  { passive: false }
-);
-
-document.addEventListener(
-  "touchmove",
-  (e) => {
-    const t = e.target;
-    if (isUITarget(t)) return;
-    e.preventDefault();
-  },
-  { passive: false }
-);
+document.addEventListener("touchstart", handleTouchStart, { passive: false });
+document.addEventListener("touchend", handleTouchEnd, { passive: false });
+document.addEventListener("touchmove", handleTouchMove, { passive: false });
 
 // --- Server integration for highscores ---
 function submitScoreToServer(playerName, scoreValue) {
@@ -544,47 +569,49 @@ function fetchHighscores(limit = 10) {
     .catch((e) => console.error("Cannot fetch highscores", e));
 }
 
-// === UI DOM refs & event listeners ===
-const saveScoreContainer = document.getElementById("saveScoreContainer");
-const saveScoreBtn = document.getElementById("saveScoreBtn");
-const nameInputContainer = document.getElementById("nameInputContainer");
-const confirmSaveBtn = document.getElementById("confirmSaveBtn");
-const playerNameInput = document.getElementById("playerName");
+// === UI Button Handlers ===
+function handleSaveScoreClick(e) {
+  e.stopPropagation();
+  if (nameInputContainer) nameInputContainer.style.display = "block";
+  if (saveScoreBtn) saveScoreBtn.style.display = "none";
+  if (playerNameInput) playerNameInput.focus();
+}
 
+function handleConfirmSaveClick(e) {
+  e.stopPropagation();
+  savePlayerScore();
+}
+
+function handlePlayerNameKeydown(e) {
+  if (e.key === "Enter") {
+    e.preventDefault();
+    savePlayerScore();
+  }
+}
+
+function handlePlayAgainClick(e) {
+  e.stopPropagation();
+  resetGame();
+  gameOver = false;
+  gameStarted = false;
+  idleLoop();
+}
+
+// === UI DOM refs & event listeners ===
 if (saveScoreBtn) {
-  saveScoreBtn.addEventListener("click", (e) => {
-    e.stopPropagation();
-    nameInputContainer.style.display = "block";
-    saveScoreBtn.style.display = "none";
-    playerNameInput.focus();
-  });
+  saveScoreBtn.addEventListener("click", handleSaveScoreClick);
 }
 
 if (confirmSaveBtn) {
-  confirmSaveBtn.addEventListener("click", (e) => {
-    e.stopPropagation();
-    savePlayerScore();
-  });
+  confirmSaveBtn.addEventListener("click", handleConfirmSaveClick);
 }
 
 if (playerNameInput) {
-  playerNameInput.addEventListener("keydown", (e) => {
-    if (e.key === "Enter") {
-      e.preventDefault();
-      savePlayerScore();
-    }
-  });
+  playerNameInput.addEventListener("keydown", handlePlayerNameKeydown);
 }
 
-const playAgainBtn = document.getElementById("playAgainBtn");
 if (playAgainBtn) {
-  playAgainBtn.addEventListener("click", (e) => {
-    e.stopPropagation();
-    resetGame();
-    gameOver = false;
-    gameStarted = false;
-    idleLoop();
-  });
+  playAgainBtn.addEventListener("click", handlePlayAgainClick);
 }
 
 function savePlayerScore() {
@@ -596,17 +623,15 @@ function savePlayerScore() {
   }
 
   if (playerName.length > 10) {
-    alert("Name must be max 10 characters!");
+    alert("Name can have max 10 characters!");
     return;
   }
 
   submitScoreToServer(playerName, score);
 
   // Hide score submission UI after saving this round
-  saveScoreContainer.style.display = "none";
-  nameInputContainer.style.display = "none";
-
-  playerNameInput.value = "";
+  hideSaveUI();
+  if (playerNameInput) playerNameInput.value = "";
 
   // Fully reset game state and go back to idle screen after saving score
   resetGame();
