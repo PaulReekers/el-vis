@@ -1,4 +1,12 @@
 // === Constants ===
+import {
+  showSaveUI,
+  hideSaveUI,
+  showPlayAgainBtn,
+  hidePlayAgainBtn,
+  showRestartBtn,
+  hideRestartBtn
+} from "./ui.js";
 // -- Canvas & Drawing Context --
 export const canvas = document.getElementById("gameCanvas");
 export const ctx = canvas.getContext("2d");
@@ -73,24 +81,8 @@ meanderImg.src = "images/meander.png";
 
 // === Utility & Helper functions ===
 export function resizeCanvas() {
-  const maxWidth = window.visualViewport
-    ? window.visualViewport.width
-    : window.innerWidth;
-  const maxHeight = window.visualViewport
-    ? window.visualViewport.height
-    : window.innerHeight;
-  const aspectRatio = 768 / 1024;
-
-  let newWidth = maxWidth;
-  let newHeight = newWidth / aspectRatio;
-
-  if (newHeight > maxHeight) {
-    newHeight = maxHeight;
-    newWidth = newHeight * aspectRatio;
-  }
-
-  canvas.width = newWidth;
-  canvas.height = newHeight;
+  canvas.width = 480;
+  canvas.height = 800;
   fishY = canvas.height / 2 - 24;
   meanderHeight =
     meanderOriginalHeight * 0.2 * (canvas.width / meanderOriginalWidth);
@@ -144,44 +136,6 @@ function drawDebugHitboxes() {
   });
 }
 
-// === UI Handling functions ===
-export function showSaveUI() {
-  if (saveScoreContainer) {
-    saveScoreContainer.style.display = "block";
-    saveScoreContainer.style.bottom = "10%";
-    saveScoreContainer.style.left = "50%";
-  }
-  if (saveScoreBtn) saveScoreBtn.style.display = "inline-block";
-  if (nameInputContainer) nameInputContainer.style.display = "none";
-  if (playerNameInput) playerNameInput.value = "";
-}
-
-export function hideSaveUI() {
-  if (saveScoreContainer) saveScoreContainer.style.display = "none";
-  if (nameInputContainer) nameInputContainer.style.display = "none";
-}
-
-export function showPlayAgainBtn() {
-  if (playAgainBtn) playAgainBtn.style.display = "block";
-}
-
-export function hidePlayAgainBtn() {
-  if (playAgainBtn) playAgainBtn.style.display = "none";
-}
-
-export function showRestartBtn() {
-  const restartBtn = document.getElementById("restartBtn");
-  if (restartBtn) {
-    restartBtn.style.display = "block";
-  }
-}
-
-export function hideRestartBtn() {
-  const restartBtn = document.getElementById("restartBtn");
-  if (restartBtn) {
-    restartBtn.style.display = "none";
-  }
-}
 
 // === Drawing functions ===
 export function drawBackground() {

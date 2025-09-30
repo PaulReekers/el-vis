@@ -7,6 +7,7 @@ export const nameInputContainer = document.getElementById("nameInputContainer");
 export const confirmSaveBtn = document.getElementById("confirmSaveBtn");
 export const playerNameInput = document.getElementById("playerName");
 export const playAgainBtn = document.getElementById("playAgainBtn");
+export const restartBtn = document.getElementById("restartBtn");
 
 // === UI Helpers ===
 export function showSaveUI() {
@@ -17,9 +18,7 @@ export function showSaveUI() {
 }
 export function hideSaveUI() {
   if (saveScoreContainer) saveScoreContainer.style.display = "none";
-  if (nameInputContainer) nameInputContainer.style.display = "none";
-  // Optionally hide saveScoreBtn, or leave visible depending on design:
-  if (saveScoreBtn) saveScoreBtn.style.display = "none";
+  if (playerNameInput) playerNameInput.value = "";
 }
 export function showPlayAgainBtn() {
   if (playAgainBtn) playAgainBtn.style.display = "block";
@@ -28,11 +27,9 @@ export function hidePlayAgainBtn() {
   if (playAgainBtn) playAgainBtn.style.display = "none";
 }
 export function showRestartBtn() {
-  const restartBtn = document.getElementById("restartBtn");
   if (restartBtn) restartBtn.style.display = "block";
 }
 export function hideRestartBtn() {
-  const restartBtn = document.getElementById("restartBtn");
   if (restartBtn) restartBtn.style.display = "none";
 }
 
@@ -41,6 +38,7 @@ export function handleSaveScoreClick(e) {
   e.stopPropagation();
   if (nameInputContainer) nameInputContainer.style.display = "block";
   if (saveScoreBtn) saveScoreBtn.style.display = "none";
+  if (confirmSaveBtn) confirmSaveBtn.style.display = "inline-block";
   if (playerNameInput) playerNameInput.focus();
 }
 export function handleConfirmSaveClick(e) {
@@ -67,21 +65,28 @@ export function savePlayerScore() {
     return;
   }
   if (playerName.length > 10) {
-    alert("Name must be max 10 characters!");
+    alert("Name can be max 10 characters!");
     return;
   }
 
-  submitScoreToServer(playerName, score);
-  hideSaveUI();
-  playerNameInput.value = "";
-  resetGame();
-  idleLoop();
+  submitScoreToServer(playerName, score)
+    .then(() => {
+      hideSaveUI();
+      playerNameInput.value = "";
+      resetGame();
+      idleLoop();
+    })
+    .catch(() => {
+      alert("Failed to save score. Please try again.");
+    });
 }
 
 // === Event listeners ===
 if (saveScoreBtn) saveScoreBtn.addEventListener("click", handleSaveScoreClick);
 if (confirmSaveBtn)
-  confirmSaveBtn.addEventListener("click", handleConfirmSaveClick);
+  confirmSaveBtn.addEventListener("click", handleConfirmSaveClick, {
+    once: true,
+  });
 if (playerNameInput)
   playerNameInput.addEventListener("keydown", handlePlayerNameKeydown);
 if (playAgainBtn) playAgainBtn.addEventListener("click", handlePlayAgainClick);
