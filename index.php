@@ -20,8 +20,20 @@
 <body>
 <main class="game">
     <canvas class="game__canvas" id="gameCanvas" role="img" aria-label="El-vis game canvas"></canvas>
+    <section role="status">
+        <div id="notification" class="notification hidden">
+            <span id="notification-message"></span>
+            <button id="notification-close" class="notification__close">×</button>
+        </div>
+    </section>
+    <ul id="highscoresList" class="highscores"></ul>
+</main>
 
+<aside>
     <section class="score score--hidden" aria-live="polite" id="saveScoreContainer">
+        <p id="gameOverScore" class="score__text"></p>
+        <p id="gameOverHighScore" class="score__text"></p>
+        <p id="gameOverHighScoreDate" class="score__text"></p>
         <button class="score__button btn" id="saveScoreBtn">Save Score</button>
 
         <div class="score__name" id="nameInputContainer">
@@ -34,19 +46,15 @@
             Try again
         </button>
     </section>
-    <div id="notification" class="notification hidden">
-        <span id="notification-message"></span>
-        <button id="notification-close" class="notification__close">×</button>
-    </div>
-</main>
+</aside>
 
-<aside class="intro" id="intro">
+<section class="intro" id="intro">
     <h3 class="intro__title">El-vis on Tour.</h3>
     <p class="intro__text">
         Click on the screen, or use your spacebar to get started.
         Swim the fish as far as you can without hitting a pillar.
     </p>
-</aside>
+</section>
 
 <script type="module" src="scripts/main.js"></script>
 </body>

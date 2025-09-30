@@ -1,11 +1,11 @@
 // === Constants ===
 import {
-  showSaveUI,
-  hideSaveUI,
-  showPlayAgainBtn,
-  hidePlayAgainBtn,
-  showRestartBtn,
-  hideRestartBtn
+    showSaveUI,
+    hideSaveUI,
+    showPlayAgainBtn,
+    hidePlayAgainBtn,
+    showRestartBtn,
+    hideRestartBtn
 } from "./ui.js";
 // -- Canvas & Drawing Context --
 export const canvas = document.getElementById("gameCanvas");
@@ -33,9 +33,11 @@ export let fishX = 100;
 export let fishY = 0;
 export let velocity = 0;
 export let isFlapping = false;
+
 export function setIsFlapping(value) {
-  isFlapping = value;
+    isFlapping = value;
 }
+
 let idleOffset = 0;
 let idleDirection = 1;
 let meanderHeight = 0;
@@ -53,8 +55,8 @@ export let highScoreDate = null;
 const savedHighScore = localStorage.getItem("highScore");
 const savedHighScoreDate = localStorage.getItem("highScoreDate");
 if (savedHighScore) {
-  highScore = parseInt(savedHighScore, 10);
-  highScoreDate = savedHighScoreDate;
+    highScore = parseInt(savedHighScore, 10);
+    highScoreDate = savedHighScoreDate;
 }
 export let gameStarted = false;
 export let gameOver = false;
@@ -81,413 +83,423 @@ meanderImg.src = "images/meander.png";
 
 // === Utility & Helper functions ===
 export function resizeCanvas() {
-  canvas.width = 480;
-  canvas.height = 800;
-  fishY = canvas.height / 2 - 24;
-  meanderHeight =
-    meanderOriginalHeight * 0.2 * (canvas.width / meanderOriginalWidth);
+    canvas.width = 480;
+    canvas.height = 800;
+    fishY = canvas.height / 2 - 24;
+    meanderHeight =
+        meanderOriginalHeight * 0.2 * (canvas.width / meanderOriginalWidth);
 }
 
 export function isUITarget(el) {
-  if (!el || !el.closest) return false;
-  return (
-    el.closest("#saveScoreContainer") ||
-    el.closest("#playAgainBtn") ||
-    el.closest("#restartBtn")
-  );
+    if (!el || !el.closest) return false;
+    return (
+        el.closest("#saveScoreContainer") ||
+        el.closest("#playAgainBtn") ||
+        el.closest("#restartBtn")
+    );
 }
 
 function drawDebugHitboxes() {
-  const fishWidth = fishOriginalWidth * FISH_SCALE;
-  const fishHeight = fishOriginalHeight * FISH_SCALE;
-  const fishCenterX = fishX + fishWidth / 2;
-  const fishCenterY = fishY + fishHeight / 2;
-  const fishRadius = Math.min(fishWidth, fishHeight) / 2.5;
+    const fishWidth = fishOriginalWidth * FISH_SCALE;
+    const fishHeight = fishOriginalHeight * FISH_SCALE;
+    const fishCenterX = fishX + fishWidth / 2;
+    const fishCenterY = fishY + fishHeight / 2;
+    const fishRadius = Math.min(fishWidth, fishHeight) / 2.5;
 
-  ctx.beginPath();
-  ctx.arc(fishCenterX, fishCenterY, fishRadius, 0, 2 * Math.PI);
-  ctx.strokeStyle = "red";
-  ctx.lineWidth = 2;
-  ctx.stroke();
-
-  pipes.forEach((pipe, index) => {
-    ctx.strokeStyle = "lime";
+    ctx.beginPath();
+    ctx.arc(fishCenterX, fishCenterY, fishRadius, 0, 2 * Math.PI);
+    ctx.strokeStyle = "red";
     ctx.lineWidth = 2;
+    ctx.stroke();
 
-    if (index % 2 === 0) {
-      // top pipe
-      ctx.strokeRect(
-        pipe.x + PIPE_HITBOX_PADDING,
-        0,
-        pipeWidth - PIPE_HITBOX_PADDING * 2,
-        pipe.topPipeHeight
-      );
+    pipes.forEach((pipe, index) => {
+        ctx.strokeStyle = "lime";
+        ctx.lineWidth = 2;
 
-      // bottom pipe
-      const bottomY = pipe.topPipeHeight + pipeGap;
-      const bottomHeight = canvas.height - bottomY;
-      ctx.strokeRect(
-        pipe.x + PIPE_HITBOX_PADDING,
-        bottomY,
-        pipeWidth - PIPE_HITBOX_PADDING * 2,
-        bottomHeight
-      );
-    }
-  });
+        if (index % 2 === 0) {
+            // top pipe
+            ctx.strokeRect(
+                pipe.x + PIPE_HITBOX_PADDING,
+                0,
+                pipeWidth - PIPE_HITBOX_PADDING * 2,
+                pipe.topPipeHeight
+            );
+
+            // bottom pipe
+            const bottomY = pipe.topPipeHeight + pipeGap;
+            const bottomHeight = canvas.height - bottomY;
+            ctx.strokeRect(
+                pipe.x + PIPE_HITBOX_PADDING,
+                bottomY,
+                pipeWidth - PIPE_HITBOX_PADDING * 2,
+                bottomHeight
+            );
+        }
+    });
 }
 
 
 // === Drawing functions ===
 export function drawBackground() {
-  ctx.drawImage(bgImg, 0, 0, canvas.width, canvas.height);
+    ctx.drawImage(bgImg, 0, 0, canvas.width, canvas.height);
 }
 
 export function drawFish(customY = fishY) {
-  ctx.save();
-  const fishWidth = fishOriginalWidth * FISH_SCALE;
-  const fishHeight = fishOriginalHeight * FISH_SCALE;
-  ctx.translate(fishX + fishWidth * 0.4, customY + fishHeight * 0.4);
-  let angle = 0;
-  if (isFlapping) {
-    angle = (-20 * Math.PI) / 180;
-  } else if (velocity > 0) {
-    const maxAngle = (90 * Math.PI) / 180;
-    const factor = Math.min(velocity / 10, 1);
-    angle = factor * maxAngle;
-  }
-  ctx.rotate(angle);
-  ctx.drawImage(
-    fishImg,
-    -fishWidth / 2,
-    -fishHeight / 2,
-    fishWidth,
-    fishHeight
-  );
-  ctx.restore();
+    ctx.save();
+    const fishWidth = fishOriginalWidth * FISH_SCALE;
+    const fishHeight = fishOriginalHeight * FISH_SCALE;
+    ctx.translate(fishX + fishWidth * 0.4, customY + fishHeight * 0.4);
+    let angle = 0;
+    if (isFlapping) {
+        angle = (-20 * Math.PI) / 180;
+    } else if (velocity > 0) {
+        const maxAngle = (90 * Math.PI) / 180;
+        const factor = Math.min(velocity / 10, 1);
+        angle = factor * maxAngle;
+    }
+    ctx.rotate(angle);
+    ctx.drawImage(
+        fishImg,
+        -fishWidth / 2,
+        -fishHeight / 2,
+        fishWidth,
+        fishHeight
+    );
+    ctx.restore();
 }
 
 export function drawPipes() {
-  pipes.forEach((pipe, index) => {
-    if (index % 2 === 0) {
-      // top pipe
-      const topPipeHeight = pipe.topPipeHeight;
-      ctx.drawImage(pipeImg, pipe.x, 0, pipeWidth, topPipeHeight);
-      // bottom pipe (the next pipe in array)
-      const bottomPipe = pipes[index + 1];
-      if (bottomPipe) {
-        const bottomPipeY = topPipeHeight + pipeGap;
-        const bottomPipeHeight = canvas.height - bottomPipeY;
-        ctx.drawImage(
-          pipeImg,
-          bottomPipe.x,
-          bottomPipeY,
-          pipeWidth,
-          bottomPipeHeight
-        );
-      }
-    }
-  });
+    pipes.forEach((pipe, index) => {
+        if (index % 2 === 0) {
+            // top pipe
+            const topPipeHeight = pipe.topPipeHeight;
+            ctx.drawImage(pipeImg, pipe.x, 0, pipeWidth, topPipeHeight);
+            // bottom pipe (the next pipe in array)
+            const bottomPipe = pipes[index + 1];
+            if (bottomPipe) {
+                const bottomPipeY = topPipeHeight + pipeGap;
+                const bottomPipeHeight = canvas.height - bottomPipeY;
+                ctx.drawImage(
+                    pipeImg,
+                    bottomPipe.x,
+                    bottomPipeY,
+                    pipeWidth,
+                    bottomPipeHeight
+                );
+            }
+        }
+    });
 }
 
 export function drawMeander() {
-  const meanderWidth =
-    meanderOriginalWidth * (meanderHeight / meanderOriginalHeight);
-  for (let x = meanderX; x < canvas.width + meanderWidth; x += meanderWidth) {
-    ctx.drawImage(
-      meanderImg,
-      x,
-      canvas.height - meanderHeight,
-      meanderWidth,
-      meanderHeight
-    );
-  }
+    const meanderWidth =
+        meanderOriginalWidth * (meanderHeight / meanderOriginalHeight);
+    for (let x = meanderX; x < canvas.width + meanderWidth; x += meanderWidth) {
+        ctx.drawImage(
+            meanderImg,
+            x,
+            canvas.height - meanderHeight,
+            meanderWidth,
+            meanderHeight
+        );
+    }
 }
 
 export function drawScore() {
-  ctx.fillStyle = "white";
-  ctx.font = `${canvas.width / 10}px "Papyrus", "Times New Roman", serif`;
-  ctx.textAlign = "center";
-  ctx.fillText(score, canvas.width / 2, canvas.height * 0.2);
+    ctx.fillStyle = "white";
+    ctx.font = `${canvas.width / 10}px "Papyrus", "Times New Roman", serif`;
+    ctx.textAlign = "center";
+    ctx.fillText(score, canvas.width / 2, canvas.height * 0.2);
 }
 
 export function drawHighscores() {
-  if (!highscores || highscores.length === 0) return;
-  ctx.font = `${canvas.width / 20}px Arial`;
-  ctx.fillStyle = "yellow";
-  ctx.textAlign = "center";
-  ctx.fillText("Top Scores", canvas.width / 2, canvas.height / 2 + 100);
-  ctx.font = `${canvas.width / 30}px Arial`;
-  highscores.slice(0, 10).forEach((row, index) => {
-    ctx.fillText(
-      `${index + 1}. ${row.player}: ${row.score}`,
-      canvas.width / 2,
-      canvas.height / 2 + 140 + index * 30
-    );
-  });
+    const container = document.getElementById("highscoresList");
+    if (!container) return;
+    container.innerHTML = "";
+    highscores.slice(0, 10).forEach((row, index) => {
+        const item = document.createElement("li");
+        item.textContent = `${index + 1}. ${row.player}: ${row.score}`;
+        container.appendChild(item);
+    });
 }
 
 export function drawGameOver() {
-  drawBackground();
-  drawPipes();
-  drawMeander();
-  drawFish();
+    drawBackground();
+    drawPipes();
+    drawMeander();
+    drawFish();
 
-  ctx.fillStyle = "rgba(0,0,0,0.3)";
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
-  ctx.fillStyle = "white";
-  ctx.font = `${canvas.width / 8}px "Papyrus", "Times New Roman", serif`;
-  ctx.textAlign = "center";
-  ctx.fillText("Score: " + score, canvas.width / 2, canvas.height / 2 - 80);
+    ctx.fillStyle = "rgba(0,0,0,0.3)";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = "white";
+    ctx.font = `${canvas.width / 8}px "Papyrus", "Times New Roman", serif`;
+    ctx.textAlign = "center";
 
-  showRestartBtn();
+    // Update DOM elements instead of drawing with fillText
+    const scoreElement = document.getElementById("gameOverScore");
+    const highScoreElement = document.getElementById("gameOverHighScore");
+    const highScoreDateElement = document.getElementById("gameOverHighScoreDate");
 
-  if (score > 0) {
-    showSaveUI();
-  } else {
-    if (saveScoreBtn) saveScoreBtn.style.display = "none";
-    if (nameInputContainer) nameInputContainer.style.display = "none";
-    if (saveScoreContainer) saveScoreContainer.style.display = "block";
-  }
-  showPlayAgainBtn();
+    if (scoreElement) {
+        scoreElement.textContent = "Score: " + score;
+    }
+    if (highScoreElement) {
+        highScoreElement.textContent = "Best score: " + highScore;
+    }
+    if (highScoreDateElement && highScoreDate) {
+        highScoreDateElement.textContent = "Achieved on: " + highScoreDate;
+    } else if (highScoreDateElement) {
+        highScoreDateElement.textContent = "";
+    }
+
+    showRestartBtn();
+
+    if (score > 0) {
+        showSaveUI();
+    } else {
+        if (saveScoreBtn) saveScoreBtn.style.display = "none";
+        if (nameInputContainer) nameInputContainer.style.display = "none";
+        if (saveScoreContainer) saveScoreContainer.style.display = "block";
+    }
+    showPlayAgainBtn();
 }
 
 // === Update & Collision ===
 export function updatePipes() {
-  const meanderWidth =
-    meanderOriginalWidth * (meanderHeight / meanderOriginalHeight);
-  meanderX -= pipeSpeed;
-  if (meanderX <= -meanderWidth) {
-    meanderX += meanderWidth;
-  }
-
-  if (pipesSpawned === 0 && Date.now() - gameStartTime < 2000) {
-    return;
-  }
-  if (
-    pipes.length === 0 ||
-    pipes[pipes.length - 1].x < canvas.width - PIPE_DISTANCE
-  ) {
-    let topPipeHeight = Math.random() * (canvas.height - pipeGap - 50) + 20;
-    pipes.push({
-      x: canvas.width,
-      y: 0,
-      height: topPipeHeight,
-      topPipeHeight: topPipeHeight,
-      scored: false,
-    });
-    pipes.push({
-      x: canvas.width,
-      y: topPipeHeight + pipeGap,
-      height: canvas.height - (topPipeHeight + pipeGap),
-      topPipeHeight: topPipeHeight,
-      scored: false,
-    });
-
-    pipesSpawned++;
-    if (pipesSpawned % 5 === 0) {
-      pipeSpeed += 0.5;
+    const meanderWidth =
+        meanderOriginalWidth * (meanderHeight / meanderOriginalHeight);
+    meanderX -= pipeSpeed;
+    if (meanderX <= -meanderWidth) {
+        meanderX += meanderWidth;
     }
-  }
 
-  pipes.forEach((pipe) => (pipe.x -= pipeSpeed));
-
-  const fishWidth = fishOriginalWidth * FISH_SCALE;
-  for (let i = 0; i < pipes.length; i += 2) {
-    let pipePair = pipes[i];
-    if (!pipePair.scored && fishX + fishWidth > pipePair.x + pipeWidth / 2) {
-      score++;
-      pipePair.scored = true;
-      pipes[i + 1].scored = true;
+    if (pipesSpawned === 0 && Date.now() - gameStartTime < 2000) {
+        return;
     }
-  }
+    if (
+        pipes.length === 0 ||
+        pipes[pipes.length - 1].x < canvas.width - PIPE_DISTANCE
+    ) {
+        let topPipeHeight = Math.random() * (canvas.height - pipeGap - 50) + 20;
+        pipes.push({
+            x: canvas.width,
+            y: 0,
+            height: topPipeHeight,
+            topPipeHeight: topPipeHeight,
+            scored: false,
+        });
+        pipes.push({
+            x: canvas.width,
+            y: topPipeHeight + pipeGap,
+            height: canvas.height - (topPipeHeight + pipeGap),
+            topPipeHeight: topPipeHeight,
+            scored: false,
+        });
 
-  if (pipes[0].x + pipeWidth < 0) {
-    pipes.shift();
-    pipes.shift();
-  }
+        pipesSpawned++;
+        if (pipesSpawned % 5 === 0) {
+            pipeSpeed += 0.5;
+        }
+    }
+
+    pipes.forEach((pipe) => (pipe.x -= pipeSpeed));
+
+    const fishWidth = fishOriginalWidth * FISH_SCALE;
+    for (let i = 0; i < pipes.length; i += 2) {
+        let pipePair = pipes[i];
+        if (!pipePair.scored && fishX + fishWidth > pipePair.x + pipeWidth / 2) {
+            score++;
+            pipePair.scored = true;
+            pipes[i + 1].scored = true;
+        }
+    }
+
+    if (pipes[0].x + pipeWidth < 0) {
+        pipes.shift();
+        pipes.shift();
+    }
 }
 
 export function checkCollision() {
-  const fishWidth = fishOriginalWidth * FISH_SCALE;
-  const fishHeight = fishOriginalHeight * FISH_SCALE;
+    const fishWidth = fishOriginalWidth * FISH_SCALE;
+    const fishHeight = fishOriginalHeight * FISH_SCALE;
 
-  // Onderaan canvas
-  if (fishY + fishHeight > canvas.height) {
-    stopGame();
-    return;
-  }
-
-  // Meander
-  if (fishY + fishHeight > canvas.height - meanderHeight) {
-    stopGame();
-    return;
-  }
-
-  // Pijpen
-  for (let i = 0; i < pipes.length; i += 2) {
-    const topPipe = pipes[i];
-    const topPipeHeight = topPipe.topPipeHeight;
-    const bottomY = topPipeHeight + pipeGap;
-
-    const pipeHitboxLeft = topPipe.x + PIPE_HITBOX_PADDING;
-    const pipeHitboxRight = topPipe.x + pipeWidth - PIPE_HITBOX_PADDING;
-    const fishRight = fishX + fishWidth;
-    const fishLeft = fishX;
-
-    const overlapsX = fishRight > pipeHitboxLeft && fishLeft < pipeHitboxRight;
-
-    if (overlapsX) {
-      const hitsTop = fishY <= topPipeHeight;
-      const hitsBottom = fishY + fishHeight >= bottomY;
-
-      if (hitsTop || hitsBottom) {
+    // Onderaan canvas
+    if (fishY + fishHeight > canvas.height) {
         stopGame();
         return;
-      }
     }
-  }
+
+    // Meander
+    if (fishY + fishHeight > canvas.height - meanderHeight) {
+        stopGame();
+        return;
+    }
+
+    // Pijpen
+    for (let i = 0; i < pipes.length; i += 2) {
+        const topPipe = pipes[i];
+        const topPipeHeight = topPipe.topPipeHeight;
+        const bottomY = topPipeHeight + pipeGap;
+
+        const pipeHitboxLeft = topPipe.x + PIPE_HITBOX_PADDING;
+        const pipeHitboxRight = topPipe.x + pipeWidth - PIPE_HITBOX_PADDING;
+        const fishRight = fishX + fishWidth;
+        const fishLeft = fishX;
+
+        const overlapsX = fishRight > pipeHitboxLeft && fishLeft < pipeHitboxRight;
+
+        if (overlapsX) {
+            const hitsTop = fishY <= topPipeHeight;
+            const hitsBottom = fishY + fishHeight >= bottomY;
+
+            if (hitsTop || hitsBottom) {
+                stopGame();
+                return;
+            }
+        }
+    }
 }
 
 // === Game state & loops ===
 export function initGameState() {
-  fishY = canvas.height / 2 - 24;
-  velocity = 0;
-  pipes = [];
-  score = 0;
-  pipesSpawned = 0;
-  pipeSpeed = 4;
-  gameStartTime = Date.now();
-  gameOver = false;
-  highscoresVisible = true;
+    fishY = canvas.height / 2 - 24;
+    velocity = 0;
+    pipes = [];
+    score = 0;
+    pipesSpawned = 0;
+    pipeSpeed = 4;
+    gameStartTime = Date.now();
+    gameOver = false;
+    highscoresVisible = true;
 }
 
 export function updateHighscoreIfNeeded() {
-  if (score > highScore) {
-    highScore = score;
-    highScoreDate = new Date().toLocaleString();
-    localStorage.setItem("highScore", highScore);
-    localStorage.setItem("highScoreDate", highScoreDate);
-  }
+    if (score > highScore) {
+        highScore = score;
+        highScoreDate = new Date().toLocaleString();
+        localStorage.setItem("highScore", highScore);
+        localStorage.setItem("highScoreDate", highScoreDate);
+    }
 }
 
 export function startGame() {
-  if (gameStarted) return;
-  gameStarted = true;
-  if (playAgainBtn) playAgainBtn.style.display = "none";
-  gameStartTime = Date.now();
-  animId = requestAnimationFrame(gameLoop);
-  highscoresVisible = false;
+    if (gameStarted) return;
+    gameStarted = true;
+    if (playAgainBtn) playAgainBtn.style.display = "none";
+    gameStartTime = Date.now();
+    animId = requestAnimationFrame(gameLoop);
+    highscoresVisible = false;
 }
 
 export function stopGame() {
-  if (animId) cancelAnimationFrame(animId);
-  animId = null;
-  gameStarted = false;
-  isFlapping = false;
-  gameOver = true;
+    if (animId) cancelAnimationFrame(animId);
+    animId = null;
+    gameStarted = false;
+    isFlapping = false;
+    gameOver = true;
 
-  updateHighscoreIfNeeded();
-  drawGameOver();
-  restartCooldown = true;
-  setTimeout(() => {
-    restartCooldown = false;
-  }, 1000);
+    updateHighscoreIfNeeded();
+    drawGameOver();
+    restartCooldown = true;
+    setTimeout(() => {
+        restartCooldown = false;
+    }, 1000);
 }
 
 export function resetGame() {
-  fetchHighscores();
-  initGameState();
+    initGameState();
 
-  hideRestartBtn();
-  hideSaveUI();
-  hidePlayAgainBtn();
+    hideRestartBtn();
+    hideSaveUI();
+    hidePlayAgainBtn();
 
-  drawBackground();
-  drawMeander();
-  drawFish();
+    drawBackground();
+    drawMeander();
+    drawFish();
 
-  fetchHighscores();
+    fetchHighscores();
 }
 
 export function gameLoop() {
-  drawBackground();
+    drawBackground();
 
-  if (gameOver) {
-    drawGameOver();
-    return;
-  }
+    if (gameOver) {
+        drawGameOver();
+        return;
+    }
 
-  if (isFlapping) {
-    velocity = LIFT;
-  } else {
-    velocity += GRAVITY;
-  }
-  fishY += velocity;
-  drawFish();
+    if (isFlapping) {
+        velocity = LIFT;
+    } else {
+        velocity += GRAVITY;
+    }
+    fishY += velocity;
+    drawFish();
 
-  updatePipes();
-  drawPipes();
-  drawMeander();
+    updatePipes();
+    drawPipes();
+    drawMeander();
 
-  drawScore();
-  if (DEBUG) {
-    drawDebugHitboxes();
-  }
-  checkCollision();
+    drawScore();
+    if (DEBUG) {
+        drawDebugHitboxes();
+    }
+    checkCollision();
 
-  if (gameStarted) {
-    animId = requestAnimationFrame(gameLoop);
-  }
+    if (gameStarted) {
+        animId = requestAnimationFrame(gameLoop);
+    }
 }
 
 export function idleLoop() {
-  drawBackground();
-  drawMeander();
+    drawBackground();
+    drawMeander();
 
-  const meanderWidth =
-    meanderOriginalWidth * (meanderHeight / meanderOriginalHeight);
-  meanderX -= pipeSpeed;
-  if (meanderX <= -meanderWidth) {
-    meanderX += meanderWidth;
-  }
+    const meanderWidth =
+        meanderOriginalWidth * (meanderHeight / meanderOriginalHeight);
+    meanderX -= pipeSpeed;
+    if (meanderX <= -meanderWidth) {
+        meanderX += meanderWidth;
+    }
 
-  idleOffset += idleDirection * 0.5;
-  if (idleOffset > 5 || idleOffset < -5) {
-    idleDirection *= -1;
-  }
+    idleOffset += idleDirection * 0.5;
+    if (idleOffset > 5 || idleOffset < -5) {
+        idleDirection *= -1;
+    }
 
-  drawFish(fishY + idleOffset);
-  drawScore();
-  if (highscoresVisible) {
-    drawHighscores();
-  }
+    drawFish(fishY + idleOffset);
+    drawScore();
+    if (highscoresVisible) {
+        drawHighscores();
+    }
 
-  if (!gameStarted) {
-    requestAnimationFrame(idleLoop);
-  }
+    if (!gameStarted) {
+        requestAnimationFrame(idleLoop);
+    }
 }
 
 // === Server integration ===
 export async function submitScoreToServer(playerName, scoreValue) {
-  try {
-    const response = await fetch("submit_score.php", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ player: playerName, score: scoreValue }),
-    });
-    return await response.json();
-  } catch (err) {
-    console.error("Network error", err);
-  }
+    try {
+        const response = await fetch("submit_score.php", {
+            method: "POST",
+            headers: {"Content-Type": "application/json"},
+            body: JSON.stringify({player: playerName, score: scoreValue}),
+        });
+        return await response.json();
+    } catch (err) {
+        console.error("Network error", err);
+    }
 }
 
 export let highscores = [];
 
 export async function fetchHighscores(limit = 10) {
-  try {
-    const response = await fetch(`get_highscores.php?limit=${limit}`);
-    highscores = await response.json();
-  } catch (e) {
-    console.error("Cannot fetch highscores", e);
-  }
+    try {
+        const response = await fetch(`get_highscores.php?limit=${limit}`);
+        highscores = await response.json();
+    } catch (e) {
+        console.error("Cannot fetch highscores", e);
+    }
 }

@@ -210,3 +210,26 @@ body {
     clip: rect(0, 0, 0, 0);
     border: 0;
 }
+
+.highscores {
+    position: absolute;
+    top: 70%;
+    left: 50%;
+    transform: translateX(-50%);
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    color: var(--color-white);
+    text-align: center;
+}
+
+.highscores li {
+    margin: 4px 0;
+}
+
+
+.highscores li.current-player {
+    font-weight: bold;
+    color: yellow;
+    text-decoration: underline;
+}
