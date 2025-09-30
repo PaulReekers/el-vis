@@ -155,7 +155,7 @@ body {
 
 .score__overview {
     position: absolute;
-    top: 15%;
+    top: 20%;
     left: 50%;
     transform: translateX(-50%);
     z-index: 10;
@@ -263,4 +263,8 @@ body {
     font-weight: bold;
     color: yellow;
     text-decoration: underline;
+}
+
+.input--error {
+    border: 2px solid red;
 }

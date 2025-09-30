@@ -127,12 +127,20 @@ export function showNotification(message, type = "info") {
     notification.classList.add(`notification--${type}`);
     messageSpan.textContent = message;
 
+    if (playerNameInput) {
+        playerNameInput.classList.add("input--error");
+    }
+
     void notification.offsetWidth; // force reflow
     notification.classList.add("show");
 
     function closeNotification() {
         notification.classList.remove("show");
         notification.classList.add("hide");
+
+        if (playerNameInput) {
+            playerNameInput.classList.remove("input--error");
+        }
 
         if (notificationTimeout) {
             clearTimeout(notificationTimeout);
