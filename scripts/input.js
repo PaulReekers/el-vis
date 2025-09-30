@@ -34,7 +34,11 @@ export function handleKeyUp(e) {
 }
 
 export function handleTouchStart(e) {
-    if (isUITarget(e.target) || gameOver) return;
+    if (isUITarget(e.target)) {
+        // e.preventDefault();
+        return;
+    }
+    if (gameOver) return;
     e.preventDefault();
     if (!gameStarted) {
         startGame();

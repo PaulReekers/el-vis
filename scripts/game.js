@@ -23,7 +23,7 @@ export const pipeWidth = 120;
 export const pipeGap = 200;
 export const PIPE_HITBOX_PADDING = 25;
 export const GRAVITY = 0.5;
-export const LIFT = -7;
+export const LIFT = -8;
 const hitboxMargin = 11;
 
 let DEBUG = false; // Show debug hitboxes if true
@@ -115,7 +115,8 @@ export function isUITarget(el) {
     return (
         el.closest("#saveScoreContainer") ||
         el.closest("#playAgainBtn") ||
-        el.closest("#restartBtn")
+        el.closest("#restartBtn") ||
+        el.closest(".highscores")
     );
 }
 
@@ -196,7 +197,12 @@ export function drawPipes() {
         if (index % 2 === 0) {
             // top pipe
             const topPipeHeight = pipe.topPipeHeight;
-            ctx.drawImage(pipeImg, pipe.x, 0, pipeWidth, topPipeHeight);
+            // Draw the top pipe rotated 180 degrees so the foot is at the top edge
+            ctx.save();
+            ctx.translate(pipe.x, topPipeHeight);
+            ctx.rotate(Math.PI);
+            ctx.drawImage(pipeImg, -pipeWidth, 0, pipeWidth, topPipeHeight);
+            ctx.restore();
             // bottom pipe (the next pipe in array)
             const bottomPipe = pipes[index + 1];
             if (bottomPipe) {

@@ -268,3 +268,20 @@ body {
 .input--error {
     border: 2px solid red;
 }
+
+@media screen and (orientation: landscape) {
+    body::before {
+        content: "Please rotate your phone to portrait mode to play the game properly!";
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: black;
+        color: white;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 9999;
+    }
+}
