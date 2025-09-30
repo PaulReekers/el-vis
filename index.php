@@ -18,33 +18,37 @@
 </head>
 
 <body>
-    <main class="game">
-        <canvas class="game__canvas" id="gameCanvas" role="img" aria-label="El-vis game canvas"></canvas>
+<main class="game">
+    <canvas class="game__canvas" id="gameCanvas" role="img" aria-label="El-vis game canvas"></canvas>
 
-        <section class="score score--hidden" aria-live="polite" id="saveScoreContainer">
-            <button class="score__button btn" id="saveScoreBtn">Save Score</button>
+    <section class="score score--hidden" aria-live="polite" id="saveScoreContainer">
+        <button class="score__button btn" id="saveScoreBtn">Save Score</button>
 
-            <div class="score__name" id="nameInputContainer">
+        <div class="score__name" id="nameInputContainer">
             <label for="playerName" class="visually-hidden">Enter your name</label>
             <input type="text" class="score__input" id="playerName" placeholder="Your name">
             <button class="score__button btn" id="confirmSaveBtn">Confirm</button>
-            </div>
+        </div>
 
-            <button class="score__button btn score__button--hidden" id="playAgainBtn" aria-label="Play again">
+        <button class="score__button btn score__button--hidden" id="playAgainBtn" aria-label="Play again">
             Try again
-            </button>
-        </section>
-    </main>
+        </button>
+    </section>
+    <div id="notification" class="notification hidden">
+        <span id="notification-message"></span>
+        <button id="notification-close" class="notification__close">×</button>
+    </div>
+</main>
 
-    <aside class="intro" id="intro">
-    <h3 class="intro__title">El-vis in Greece.</h3>
+<aside class="intro" id="intro">
+    <h3 class="intro__title">El-vis on Tour.</h3>
     <p class="intro__text">
         Click on the screen, or use your spacebar to get started.
         Swim the fish as far as you can without hitting a pillar.
     </p>
-    </aside>
+</aside>
 
-    <script type="module" src="scripts/main.js"></script>
+<script type="module" src="scripts/main.js"></script>
 </body>
 
 </html>
