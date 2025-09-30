@@ -162,7 +162,9 @@ body {
 }
 
 .score__button {
-    margin: 8px 0;
+    display: block;
+    margin: 8px auto;
+    text-align: center;
 }
 
 .score__button--hidden {

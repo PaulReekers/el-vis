@@ -24,6 +24,7 @@ export function hideSaveUI() {
 
 export function showPlayAgainBtn() {
     if (playAgainBtn) playAgainBtn.style.display = "block";
+    if (playAgainBtn) playAgainBtn.classList.remove("score__button--hidden");
 }
 
 export function hidePlayAgainBtn() {
