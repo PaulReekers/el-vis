@@ -26,14 +26,14 @@
             <button id="notification-close" class="notification__close">×</button>
         </div>
     </section>
-    <ul id="highscoresList" class="highscores"></ul>
+    <div id="scoreDisplay" class="score score__current">0</div>
+    <ol id="highscoresList" class="highscores"></ol>
 </main>
 
 <aside>
-    <section class="score score--hidden" aria-live="polite" id="saveScoreContainer">
+    <section class="score score__overview score--hidden" id="saveScoreContainer">
         <p id="gameOverScore" class="score__text"></p>
-        <p id="gameOverHighScore" class="score__text"></p>
-        <p id="gameOverHighScoreDate" class="score__text"></p>
+        <p id="gameOverHighScore" class="score__text small"></p>
         <button class="score__button btn" id="saveScoreBtn">Save Score</button>
 
         <div class="score__name" id="nameInputContainer">

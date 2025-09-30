@@ -6,6 +6,7 @@
     --color-white: #ffffff;
 
     --font-body: Helvetica, sans-serif;
+    --font-title: "Papyrus", "Times New Roman", serif;
     --font-btn: "Papyrus", "Times New Roman", serif;
 
     --btn-radius: 8px;
@@ -137,9 +138,28 @@ body {
 /* Score container */
 .score {
     position: absolute;
-    top: 60%;
+    top: 10%;
     left: 50%;
-    transform: translate(-50%, -50%);
+    transform: translateX(-50%);
+    font: 80px/1 "Papyrus", "Times New Roman", serif;
+    color: #fff;
+    text-shadow: 0 2px 6px rgba(0, 0, 0, .5);
+    pointer-events: none;
+}
+
+.score__current {
+    font-size: 48px;
+    margin-bottom: 8px;
+}
+
+.score__overview {
+    position: absolute;
+    top: 15%;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 10;
+    text-align: center;
+    pointer-events: auto;
 }
 
 .score--hidden {
@@ -150,8 +170,8 @@ body {
     display: flex;
     justify-content: center;
     align-items: center;
-    gap: 8px;
 }
+
 
 .score__input {
     padding: 10px;
@@ -169,6 +189,13 @@ body {
 
 .score__button--hidden {
     display: none;
+}
+
+.score__text {
+    font: 48px "Papyrus", "Times New Roman", serif;
+    color: white;
+    text-align: center;
+    margin: 0;
 }
 
 /* Buttons - shared style */
@@ -200,6 +227,10 @@ body {
     display: flex;
 }
 
+.small {
+    font-size: 1.5rem;
+}
+
 .visually-hidden {
     position: absolute;
     width: 1px;
@@ -213,20 +244,18 @@ body {
 
 .highscores {
     position: absolute;
-    top: 70%;
+    top: 65%;
     left: 50%;
     transform: translateX(-50%);
-    list-style: none;
     padding: 0;
     margin: 0;
     color: var(--color-white);
-    text-align: center;
+    text-align: left;
 }
 
 .highscores li {
     margin: 4px 0;
 }
-
 
 .highscores li.current-player {
     font-weight: bold;

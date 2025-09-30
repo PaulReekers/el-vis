@@ -70,6 +70,7 @@ export const nameInputContainer = document.getElementById("nameInputContainer");
 export const confirmSaveBtn = document.getElementById("confirmSaveBtn");
 export const playerNameInput = document.getElementById("playerName");
 export const playAgainBtn = document.getElementById("playAgainBtn");
+export const scoreDisplayEl = document.getElementById("scoreDisplay");
 
 // === Images ===
 export const fishImg = new Image();
@@ -205,11 +206,15 @@ export function drawMeander() {
     }
 }
 
-export function drawScore() {
-    ctx.fillStyle = "white";
-    ctx.font = `${canvas.width / 10}px "Papyrus", "Times New Roman", serif`;
-    ctx.textAlign = "center";
-    ctx.fillText(score, canvas.width / 2, canvas.height * 0.2);
+export function updateScoreDisplay() {
+    if (!scoreDisplayEl) return;
+    scoreDisplayEl.textContent = String(score);
+    scoreDisplayEl.hidden = false;
+
+    const highScoreElement = document.getElementById("gameOverHighScore");
+    if (highScoreElement && gameStarted) {
+        highScoreElement.style.display = "none";
+    }
 }
 
 export function drawHighscores() {
@@ -218,7 +223,7 @@ export function drawHighscores() {
     container.innerHTML = "";
     highscores.slice(0, 10).forEach((row, index) => {
         const item = document.createElement("li");
-        item.textContent = `${index + 1}. ${row.player}: ${row.score}`;
+        item.textContent = `${row.player}: ${row.score}`;
         container.appendChild(item);
     });
 }
@@ -229,28 +234,23 @@ export function drawGameOver() {
     drawMeander();
     drawFish();
 
-    ctx.fillStyle = "rgba(0,0,0,0.3)";
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-    ctx.fillStyle = "white";
-    ctx.font = `${canvas.width / 8}px "Papyrus", "Times New Roman", serif`;
-    ctx.textAlign = "center";
-
     // Update DOM elements instead of drawing with fillText
     const scoreElement = document.getElementById("gameOverScore");
     const highScoreElement = document.getElementById("gameOverHighScore");
-    const highScoreDateElement = document.getElementById("gameOverHighScoreDate");
 
     if (scoreElement) {
         scoreElement.textContent = "Score: " + score;
+        if (scoreDisplayEl) {
+            scoreDisplayEl.hidden = true;
+        }
     }
     if (highScoreElement) {
+        highScoreElement.style.display = "block";
         highScoreElement.textContent = "Best score: " + highScore;
     }
-    if (highScoreDateElement && highScoreDate) {
-        highScoreDateElement.textContent = "Achieved on: " + highScoreDate;
-    } else if (highScoreDateElement) {
-        highScoreDateElement.textContent = "";
-    }
+
+    const highscoresList = document.getElementById("highscoresList");
+    if (highscoresList) highscoresList.classList.remove("score--hidden");
 
     showRestartBtn();
 
@@ -309,6 +309,7 @@ export function updatePipes() {
         let pipePair = pipes[i];
         if (!pipePair.scored && fishX + fishWidth > pipePair.x + pipeWidth / 2) {
             score++;
+            updateScoreDisplay();
             pipePair.scored = true;
             pipes[i + 1].scored = true;
         }
@@ -367,6 +368,7 @@ export function initGameState() {
     velocity = 0;
     pipes = [];
     score = 0;
+    updateScoreDisplay();
     pipesSpawned = 0;
     pipeSpeed = 4;
     gameStartTime = Date.now();
@@ -390,6 +392,10 @@ export function startGame() {
     gameStartTime = Date.now();
     animId = requestAnimationFrame(gameLoop);
     highscoresVisible = false;
+    const highscoresList = document.getElementById("highscoresList");
+    if (highscoresList) highscoresList.classList.add("score--hidden");
+    updateScoreDisplay();
+    if (scoreDisplayEl) scoreDisplayEl.hidden = false;
 }
 
 export function stopGame() {
@@ -413,6 +419,8 @@ export function resetGame() {
     hideRestartBtn();
     hideSaveUI();
     hidePlayAgainBtn();
+
+    updateScoreDisplay();
 
     drawBackground();
     drawMeander();
@@ -441,7 +449,7 @@ export function gameLoop() {
     drawPipes();
     drawMeander();
 
-    drawScore();
+    updateScoreDisplay();
     if (DEBUG) {
         drawDebugHitboxes();
     }
@@ -469,7 +477,7 @@ export function idleLoop() {
     }
 
     drawFish(fishY + idleOffset);
-    drawScore();
+    updateScoreDisplay();
     if (highscoresVisible) {
         drawHighscores();
     }
