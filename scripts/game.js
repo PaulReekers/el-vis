@@ -33,6 +33,7 @@ export let fishX = 100;
 export let fishY = 0;
 export let velocity = 0;
 export let isFlapping = false;
+export let highscoresDrawn = false;
 
 export function setIsFlapping(value) {
     isFlapping = value;
@@ -48,6 +49,10 @@ let pipesSpawned = 0;
 let gameStartTime = null;
 export let score = 0;
 export let highscoresVisible = true;
+export let gameStarted = false;
+export let gameOver = false;
+let animId = null;
+let restartCooldown = false;
 
 // === Highscore & Game State ===
 export let highScore = 0;
@@ -58,10 +63,6 @@ if (savedHighScore) {
     highScore = parseInt(savedHighScore, 10);
     highScoreDate = savedHighScoreDate;
 }
-export let gameStarted = false;
-export let gameOver = false;
-let animId = null;
-let restartCooldown = false;
 
 // === DOM references ===
 export const saveScoreContainer = document.getElementById("saveScoreContainer");
@@ -71,6 +72,23 @@ export const confirmSaveBtn = document.getElementById("confirmSaveBtn");
 export const playerNameInput = document.getElementById("playerName");
 export const playAgainBtn = document.getElementById("playAgainBtn");
 export const scoreDisplayEl = document.getElementById("scoreDisplay");
+
+// === Current player highlight ===
+let currentPlayerName = localStorage.getItem('lastPlayerName') || '';
+const normalizeName = (s) => (s || '').trim().toLowerCase();
+
+export function setCurrentPlayerName(name) {
+    currentPlayerName = name || '';
+    localStorage.setItem('lastPlayerName', currentPlayerName);
+    drawHighscores();
+}
+
+if (confirmSaveBtn) {
+    confirmSaveBtn.addEventListener('click', () => {
+        const val = playerNameInput && playerNameInput.value ? playerNameInput.value.trim() : '';
+        if (val) setCurrentPlayerName(val);
+    });
+}
 
 // === Images ===
 export const fishImg = new Image();
@@ -221,12 +239,21 @@ export function drawHighscores() {
     const container = document.getElementById("highscoresList");
     if (!container) return;
     container.innerHTML = "";
-    highscores.slice(0, 10).forEach((row, index) => {
+
+    const targetName = normalizeName(currentPlayerName) || normalizeName(playerNameInput && playerNameInput.value);
+
+    highscores.slice(0, 10).forEach((row) => {
         const item = document.createElement("li");
         item.textContent = `${row.player}: ${row.score}`;
+
+        if (targetName && normalizeName(row.player) === targetName) {
+            item.classList.add("current-player");
+        }
+
         container.appendChild(item);
     });
 }
+
 
 export function drawGameOver() {
     drawBackground();
@@ -388,10 +415,10 @@ export function updateHighscoreIfNeeded() {
 export function startGame() {
     if (gameStarted) return;
     gameStarted = true;
+    highscoresDrawn = false;
     if (playAgainBtn) playAgainBtn.style.display = "none";
     gameStartTime = Date.now();
     animId = requestAnimationFrame(gameLoop);
-    highscoresVisible = false;
     const highscoresList = document.getElementById("highscoresList");
     if (highscoresList) highscoresList.classList.add("score--hidden");
     updateScoreDisplay();
@@ -404,6 +431,7 @@ export function stopGame() {
     gameStarted = false;
     isFlapping = false;
     gameOver = true;
+    document.body.classList.add("game-over");
 
     updateHighscoreIfNeeded();
     drawGameOver();
@@ -415,6 +443,7 @@ export function stopGame() {
 
 export function resetGame() {
     initGameState();
+    highscoresDrawn = false;
 
     hideRestartBtn();
     hideSaveUI();
@@ -427,6 +456,7 @@ export function resetGame() {
     drawFish();
 
     fetchHighscores();
+    document.body.classList.remove("game-over");
 }
 
 export function gameLoop() {
@@ -478,8 +508,9 @@ export function idleLoop() {
 
     drawFish(fishY + idleOffset);
     updateScoreDisplay();
-    if (highscoresVisible) {
+    if (highscoresVisible && !highscoresDrawn) {
         drawHighscores();
+        highscoresDrawn = true;
     }
 
     if (!gameStarted) {
@@ -507,6 +538,7 @@ export async function fetchHighscores(limit = 10) {
     try {
         const response = await fetch(`get_highscores.php?limit=${limit}`);
         highscores = await response.json();
+        drawHighscores();
     } catch (e) {
         console.error("Cannot fetch highscores", e);
     }

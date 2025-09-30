@@ -27,7 +27,9 @@
         </div>
     </section>
     <div id="scoreDisplay" class="score score__current">0</div>
-    <ol id="highscoresList" class="highscores"></ol>
+    <div class="highscores">
+        <ol id="highscoresList"></ol>
+    </div>
 </main>
 
 <aside>
