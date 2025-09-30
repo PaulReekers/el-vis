@@ -19,12 +19,12 @@ export const fishOriginalHeight = 56;
 export const FISH_SCALE = 0.6;
 export const meanderOriginalWidth = 193;
 export const meanderOriginalHeight = 108;
-export const pipeWidth = 120;
+export const pipeWidth = 79;
 export const pipeGap = 200;
-export const PIPE_HITBOX_PADDING = 25;
+export const PIPE_HITBOX_PADDING = 1;
 export const GRAVITY = 0.5;
 export const LIFT = -8;
-const hitboxMargin = 11;
+const hitboxMargin = 1;
 
 let DEBUG = false; // Show debug hitboxes if true
 
@@ -160,6 +160,15 @@ function drawDebugHitboxes() {
 }
 
 
+// === Collision helper ===
+function circleRectCollision(cx, cy, radius, rx, ry, rw, rh) {
+    const closestX = Math.max(rx, Math.min(cx, rx + rw));
+    const closestY = Math.max(ry, Math.min(cy, ry + rh));
+    const dx = cx - closestX;
+    const dy = cy - closestY;
+    return (dx * dx + dy * dy) < (radius * radius);
+}
+
 // === Drawing functions ===
 export function drawBackground() {
     // Parallax background offset based on fish velocity
@@ -193,28 +202,39 @@ export function drawFish(customY = fishY) {
 }
 
 export function drawPipes() {
+    const footHeight = 20;
+    const capHeight = 20;
+    const middleHeight = pipeImg.height - footHeight - capHeight;
     pipes.forEach((pipe, index) => {
         if (index % 2 === 0) {
             // top pipe
             const topPipeHeight = pipe.topPipeHeight;
-            // Draw the top pipe rotated 180 degrees so the foot is at the top edge
             ctx.save();
             ctx.translate(pipe.x, topPipeHeight);
             ctx.rotate(Math.PI);
-            ctx.drawImage(pipeImg, -pipeWidth, 0, pipeWidth, topPipeHeight);
+            // cap
+            ctx.drawImage(pipeImg, 0, 0, pipeWidth, capHeight, -pipeWidth, 0, pipeWidth, capHeight);
+            // middle repeated
+            for (let y = capHeight; y < topPipeHeight - footHeight; y += middleHeight) {
+                ctx.drawImage(pipeImg, 0, capHeight, pipeWidth, middleHeight, -pipeWidth, y, pipeWidth, middleHeight);
+            }
+            // foot
+            ctx.drawImage(pipeImg, 0, pipeImg.height - footHeight, pipeWidth, footHeight, -pipeWidth, topPipeHeight - footHeight, pipeWidth, footHeight);
             ctx.restore();
+
             // bottom pipe (the next pipe in array)
             const bottomPipe = pipes[index + 1];
             if (bottomPipe) {
                 const bottomPipeY = topPipeHeight + pipeGap;
                 const bottomPipeHeight = canvas.height - bottomPipeY;
-                ctx.drawImage(
-                    pipeImg,
-                    bottomPipe.x,
-                    bottomPipeY,
-                    pipeWidth,
-                    bottomPipeHeight
-                );
+                // cap
+                ctx.drawImage(pipeImg, 0, 0, pipeWidth, capHeight, bottomPipe.x, bottomPipeY, pipeWidth, capHeight);
+                // middle repeated
+                for (let y = capHeight; y < bottomPipeHeight - footHeight; y += middleHeight) {
+                    ctx.drawImage(pipeImg, 0, capHeight, pipeWidth, middleHeight, bottomPipe.x, bottomPipeY + y, pipeWidth, middleHeight);
+                }
+                // foot
+                ctx.drawImage(pipeImg, 0, pipeImg.height - footHeight, pipeWidth, footHeight, bottomPipe.x, bottomPipeY + bottomPipeHeight - footHeight, pipeWidth, footHeight);
             }
         }
     });
@@ -270,6 +290,9 @@ export function drawGameOver() {
     drawPipes();
     drawMeander();
     drawFish();
+    if (DEBUG) {
+        drawDebugHitboxes();
+    }
 
     const scoreElement = document.getElementById("gameOverScore");
     const highScoreElement = document.getElementById("gameOverHighScore");
@@ -320,7 +343,9 @@ export function updatePipes() {
         pipes.length === 0 ||
         pipes[pipes.length - 1].x < canvas.width - PIPE_DISTANCE
     ) {
-        let topPipeHeight = Math.random() * (canvas.height - pipeGap - 50) + 20;
+        const MIN_PIPE_HEIGHT = 80;
+        const MAX_PIPE_HEIGHT = canvas.height - pipeGap - MIN_PIPE_HEIGHT;
+        let topPipeHeight = Math.random() * (MAX_PIPE_HEIGHT - MIN_PIPE_HEIGHT) + MIN_PIPE_HEIGHT;
         pipes.push({
             x: canvas.width,
             y: 0,
@@ -377,27 +402,26 @@ export function checkCollision() {
         return;
     }
 
-    // Pijpen
+    // Pilars (circle vs rect collision)
+    const fishCenterX = fishX + fishWidth / 2;
+    const fishCenterY = fishY + fishHeight / 2;
+    const fishRadius = Math.min(fishWidth, fishHeight) / 2.5;
+
     for (let i = 0; i < pipes.length; i += 2) {
         const topPipe = pipes[i];
         const topPipeHeight = topPipe.topPipeHeight;
         const bottomY = topPipeHeight + pipeGap;
 
-        const pipeHitboxLeft = topPipe.x + PIPE_HITBOX_PADDING;
-        const pipeHitboxRight = topPipe.x + pipeWidth - PIPE_HITBOX_PADDING;
-        const fishRight = fishX + fishWidth;
-        const fishLeft = fishX;
+        // top pipe
+        if (circleRectCollision(fishCenterX, fishCenterY, fishRadius, topPipe.x, 0, pipeWidth, topPipeHeight)) {
+            stopGame();
+            return;
+        }
 
-        const overlapsX = fishRight > pipeHitboxLeft && fishLeft < pipeHitboxRight;
-
-        if (overlapsX) {
-            const hitsTop = fishY <= topPipeHeight;
-            const hitsBottom = fishY + fishHeight >= bottomY;
-
-            if (hitsTop || hitsBottom) {
-                stopGame();
-                return;
-            }
+        // bottom pipe
+        if (circleRectCollision(fishCenterX, fishCenterY, fishRadius, topPipe.x, bottomY, pipeWidth, canvas.height - bottomY)) {
+            stopGame();
+            return;
         }
     }
 }
