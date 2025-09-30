@@ -53,6 +53,7 @@ export let gameStarted = false;
 export let gameOver = false;
 let animId = null;
 let restartCooldown = false;
+let bgOffsetY = 0;
 
 // === Highscore & Game State ===
 export let highScore = 0;
@@ -160,7 +161,10 @@ function drawDebugHitboxes() {
 
 // === Drawing functions ===
 export function drawBackground() {
-    ctx.drawImage(bgImg, 0, 0, canvas.width, canvas.height);
+    // Parallax background offset based on fish velocity
+    bgOffsetY += velocity * 0.2;
+    bgOffsetY = Math.max(Math.min(bgOffsetY, 50), -50);
+    ctx.drawImage(bgImg, 0, bgOffsetY, canvas.width, canvas.height);
 }
 
 export function drawFish(customY = fishY) {
@@ -261,7 +265,6 @@ export function drawGameOver() {
     drawMeander();
     drawFish();
 
-    // Update DOM elements instead of drawing with fillText
     const scoreElement = document.getElementById("gameOverScore");
     const highScoreElement = document.getElementById("gameOverHighScore");
 
@@ -278,6 +281,10 @@ export function drawGameOver() {
 
     const highscoresList = document.getElementById("highscoresList");
     if (highscoresList) highscoresList.classList.remove("score--hidden");
+
+    // ook de wrapper weer tonen
+    const highscoresWrapper = document.querySelector(".highscores");
+    if (highscoresWrapper) highscoresWrapper.classList.remove("score--hidden");
 
     showRestartBtn();
 
@@ -419,8 +426,14 @@ export function startGame() {
     if (playAgainBtn) playAgainBtn.style.display = "none";
     gameStartTime = Date.now();
     animId = requestAnimationFrame(gameLoop);
+
     const highscoresList = document.getElementById("highscoresList");
     if (highscoresList) highscoresList.classList.add("score--hidden");
+
+    // ook de wrapper hiden
+    const highscoresWrapper = document.querySelector(".highscores");
+    if (highscoresWrapper) highscoresWrapper.classList.add("score--hidden");
+
     updateScoreDisplay();
     if (scoreDisplayEl) scoreDisplayEl.hidden = false;
 }

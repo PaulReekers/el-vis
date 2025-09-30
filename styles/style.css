@@ -151,7 +151,10 @@ body {
 
 .score__current {
     font-size: 48px;
-    margin-bottom: 8px;
+    position: absolute;
+    top: 15%;
+    left: 50%;
+    transform: translateX(-50%);
 }
 
 .score__overview {
